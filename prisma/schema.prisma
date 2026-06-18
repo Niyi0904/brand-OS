@@ -1,0 +1,372 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Authentication
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  organizations OrganizationMember[]
+  brands        Brand[]
+  conversations Conversation[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Organization & Multi-tenancy
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OrganizationMember[]
+  brands      Brand[]
+  subscriptions Subscription[]
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole @default(MEMBER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Brand Management
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  logo        String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  organizationId String?
+  
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  brandBrain  BrandBrain?
+  campaigns   Campaign[]
+  contentItems ContentItem[]
+  mediaAssets MediaAsset[]
+  conversations Conversation[]
+
+  @@unique([slug, userId])
+}
+
+model BrandBrain {
+  id                String   @id @default(cuid())
+  brandId           String   @unique
+  
+  mission           String?  @db.Text
+  vision            String?  @db.Text
+  values            String?  @db.Text
+  targetAudience    String?  @db.Text
+  customerPersonas  String?  @db.Text
+  products          String?  @db.Text
+  services          String?  @db.Text
+  toneOfVoice       String?  @db.Text
+  brandColors       String?  @db.Text
+  typography        String?  @db.Text
+  competitors       String?  @db.Text
+  seoKeywords       String?  @db.Text
+  goals             String?  @db.Text
+  preferredPlatforms String? @db.Text
+  writingStyle      String?  @db.Text
+  marketingStrategy String?  @db.Text
+  offers            String?  @db.Text
+  businessInfo      String?  @db.Text
+  locations         String?  @db.Text
+  faqs              String?  @db.Text
+  brandRules        String?  @db.Text
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  brand             Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+// AI Employees
+model AIEmployee {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  description String?  @db.Text
+  purpose     String?  @db.Text
+  responsibilities String? @db.Text
+  knowledge   String?  @db.Text
+  thinkingFramework String? @db.Text
+  decisionTree String? @db.Text
+  prompt      String   @db.Text
+  outputFormat String? @db.Text
+  examples    String?  @db.Text
+  qualityChecklist String? @db.Text
+  
+  isSystem    Boolean  @default(false)
+  isCustom    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String?
+  organizationId String?
+
+  conversations Conversation[]
+}
+
+// Conversations & Chat
+model Conversation {
+  id          String   @id @default(cuid())
+  title       String
+  brandId     String
+  userId      String
+  employeeId  String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brand       Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employee    AIEmployee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  messages    Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String   @db.Text
+  metadata       Json?
+  
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// Campaigns
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  goal        String?  @db.Text
+  audience    String?  @db.Text
+  offer       String?  @db.Text
+  status      CampaignStatus @default(DRAFT)
+  
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  kpis        Json?
+  performance Json?
+  
+  brandId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brand       Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  contentItems ContentItem[]
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+// Content Planner
+model ContentItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  contentType ContentType
+  platform    String?
+  status      ContentStatus @default(DRAFT)
+  
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  
+  campaignId  String?
+  brandId     String
+  
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  brand       Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+enum ContentType {
+  POST
+  STORY
+  REEL
+  VIDEO
+  BLOG
+  EMAIL
+  AD
+  OTHER
+}
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+// Media Library
+model MediaAsset {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  type        MediaType
+  size        Int
+  mimeType    String
+  
+  folder      String?
+  tags        String[]
+  alt         String?
+  
+  brandId     String
+  
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brand       Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  OTHER
+}
+
+// Knowledge Base
+model KnowledgeArticle {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  category    String?
+  tags        String[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Subscriptions
+model Subscription {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  plan            SubscriptionPlan
+  status          SubscriptionStatus @default(ACTIVE)
+  
+  aiCredits       Int      @default(0)
+  aiCreditsUsed   Int      @default(0)
+  
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  stripePriceId   String?
+  
+  currentPeriodStart DateTime?
+  currentPeriodEnd DateTime?
+  
+  cancelAtPeriodEnd Boolean @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  TRIALING
+}

@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sidebar-width: 280px;
+    --brand-accent: #7c9cff;
+    --brand-accent-strong: #c2d1ff;
+    --color-bg: #08090f;
+    --color-surface-1: #101119;
+    --color-surface-2: #171924;
+    --color-surface-3: #202331;
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-border-hover: rgba(255, 255, 255, 0.16);
+    --color-text-primary: rgba(255, 255, 255, 0.94);
+    --color-text-secondary: rgba(255, 255, 255, 0.62);
+    --color-text-tertiary: rgba(255, 255, 255, 0.38);
+    --color-positive: #7dd3a0;
+    --color-warning: #f2c36b;
+    --color-danger: #ff8a8a;
+
+    --background: 230 30% 5%;
+    --foreground: 0 0% 94%;
+    --card: 231 21% 8%;
+    --card-foreground: 0 0% 94%;
+    --popover: 231 21% 8%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 226 100% 74%;
+    --primary-foreground: 230 30% 5%;
+    --secondary: 228 21% 15%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 228 21% 15%;
+    --muted-foreground: 0 0% 62%;
+    --accent: 228 21% 19%;
+    --accent-foreground: 0 0% 94%;
+    --destructive: 0 100% 77%;
+    --destructive-foreground: 230 30% 5%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 226 100% 74%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background: var(--color-bg);
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      linear-gradient(135deg, rgba(124, 156, 255, 0.09), transparent 32%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 22%),
+      var(--color-bg);
+    color: var(--color-text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    background: rgba(124, 156, 255, 0.32);
+    color: var(--color-text-primary);
+  }
+}
+
+@layer components {
+  .mos-app-shell {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      var(--color-bg);
+    background-size: 56px 56px;
+  }
+
+  .mos-sidebar {
+    background: rgba(16, 17, 25, 0.92);
+    border-color: var(--color-border);
+    box-shadow: 1px 0 0 rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+  }
+
+  .mos-topbar {
+    background: rgba(8, 9, 15, 0.78);
+    border-color: var(--color-border);
+    backdrop-filter: blur(18px);
+  }
+
+  .mos-card {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+      var(--color-surface-1);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    color: var(--color-text-primary);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  }
+
+  .mos-card-hover {
+    transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+  }
+
+  .mos-card-hover:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-2px);
+  }
+
+  .mos-panel {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .mos-button-primary {
+    background: var(--brand-accent);
+    color: var(--color-bg);
+  }
+
+  .mos-button-primary:hover {
+    background: var(--brand-accent-strong);
+  }
+
+  .mos-button-secondary {
+    background: var(--color-surface-3);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .mos-button-secondary:hover {
+    border-color: var(--color-border-hover);
+  }
+
+  .mos-button-outline {
+    background: transparent;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .mos-button-outline:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-border-hover);
+  }
+
+  .mos-button-ghost {
+    color: var(--color-text-secondary);
+  }
+
+  .mos-button-ghost:hover {
+    background: var(--color-surface-2);
+    color: var(--color-text-primary);
+  }
+
+  .mos-button-danger {
+    background: rgba(255, 138, 138, 0.14);
+    color: var(--color-danger);
+    border: 1px solid rgba(255, 138, 138, 0.22);
+  }
+
+  .mos-input {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    caret-color: var(--brand-accent);
+  }
+
+  .mos-input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .mos-input:focus-visible {
+    border-color: var(--brand-accent);
+    box-shadow: 0 0 0 3px rgba(124, 156, 255, 0.18);
+  }
+
+  .mos-label {
+    color: var(--color-text-secondary);
+  }
+
+  .mos-muted {
+    color: var(--color-text-secondary);
+  }
+
+  .mos-subtle {
+    color: var(--color-text-tertiary);
+  }
+
+  .mos-pill {
+    background: rgba(124, 156, 255, 0.12);
+    border: 1px solid rgba(124, 156, 255, 0.22);
+    color: var(--brand-accent-strong);
+  }
+
+  .mos-success-pill {
+    background: rgba(125, 211, 160, 0.12);
+    border: 1px solid rgba(125, 211, 160, 0.22);
+    color: var(--color-positive);
+  }
+
+  .mos-warning-pill {
+    background: rgba(242, 195, 107, 0.12);
+    border: 1px solid rgba(242, 195, 107, 0.22);
+    color: var(--color-warning);
+  }
+
+  .mos-icon-tile {
+    background: rgba(124, 156, 255, 0.12);
+    border: 1px solid rgba(124, 156, 255, 0.18);
+    color: var(--brand-accent-strong);
+  }
+
+  .mos-divider {
+    border-color: var(--color-border);
+  }
+
+  .mos-menu {
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  }
+}

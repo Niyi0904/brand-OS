@@ -1,0 +1,206 @@
+---
+alwaysApply: true
+---
+
+# MarketingOS — Cursor Rules
+# Place this file at the repo root as .cursorrules
+# Cursor reads this before every suggestion in this project.
+
+---
+
+## Project Identity
+
+This is MarketingOS — an AI-powered marketing platform built on Next.js 15, Prisma, PostgreSQL, Auth.js v5, TanStack Query v5, and Tailwind CSS v4.
+
+Milestone 1 is complete. The scaffold, auth, and brand creation are live.
+Milestone 2 (Brand Brain full form + context serialiser) is in progress.
+Do not invent architecture. Follow what exists.
+
+---
+
+## Folder Structure — Strict
+
+```
+src/
+  app/
+    (auth)/           ← unauthenticated pages (login)
+    (dashboard)/      ← all protected pages live here
+      layout.tsx      ← SERVER component — fetches brands, auth check
+    api/
+      auth/[...nextauth]/route.ts
+  components/
+    layout/           ← Sidebar, BrandSwitcher (receive props, no fetching)
+    ui/               ← reusable primitives
+  lib/
+    auth.ts           ← NextAuth config only
+    db.ts             ← Prisma singleton only
+    nav.ts            ← NAV_ITEMS config
+    utils.ts          ← cn(), slugify(), getInitials()
+    ai/               ← AI provider abstraction (M3+)
+      provider.ts     ← ONLY place that imports AI SDKs
+  providers/
+    index.tsx         ← QueryClientProvider
+  types/
+    index.ts
+  middleware.ts
+```
+
+Any file you create must fit this structure. If it doesn't fit cleanly, ask before creating.
+
+---
+
+## Non-Negotiable Rules
+
+### TypeScript
+- Strict mode is on. No `any`. No `as any`.
+- All function parameters and return types must be explicitly typed.
+- Prefer `type` over `interface` for object shapes.
+- Use discriminated unions over optional chaining where possible.
+
+### Data Fetching
+- Server Components → fetch directly with `db.*` (Prisma)
+- Client Components → TanStack Query (`useQuery`, `useMutation`)
+- Forms → Server Actions + `useActionState` + Zod
+- Never use `useEffect` + `useState` to fetch server data
+- Never use API routes for internal data reads — only for webhooks and external integrations
+
+### Server Actions pattern (always follow exactly)
+```typescript
+"use server"
+
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { z } from "zod"
+import { redirect } from "next/navigation"
+
+const Schema = z.object({ ... })
+export type ActionState = { errors?: ...; message?: string }
+
+export async function myAction(prev: ActionState, formData: FormData): Promise<ActionState> {
+  const session = await auth()
+  if (!session?.user?.id) return { message: "Unauthorised" }
+
+  const parsed = Schema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors }
+
+  await db.model.create({ data: parsed.data })
+  redirect("/destination")
+}
+```
+
+### Components
+- Props-only — components never fetch their own data
+- `"use client"` must be the literal first line for client components
+- Co-locate Server Actions (`actions.ts`) with the page that uses them
+- No default exports from component files — named exports only (exception: page.tsx and layout.tsx which Next.js requires as default exports)
+
+### Styling
+Use CSS variables from globals.css. Never hardcode colours.
+
+| Token | Value | Use |
+|---|---|---|
+| `var(--brand-accent)` | Set per brand | Primary actions, active states |
+| `var(--color-bg)` | #0a0a0f | Page background |
+| `var(--color-surface-1)` | #111118 | Cards, sidebar |
+| `var(--color-surface-2)` | #1a1a24 | Inputs, secondary cards |
+| `var(--color-surface-3)` | #24242f | Hover states, badges |
+| `var(--color-border)` | rgba(255,255,255,0.08) | All borders |
+| `var(--color-text-primary)` | rgba(255,255,255,0.92) | Headings, labels |
+| `var(--color-text-secondary)` | rgba(255,255,255,0.5) | Body, descriptions |
+| `var(--color-text-tertiary)` | rgba(255,255,255,0.28) | Hints, placeholders |
+
+- Use Tailwind for layout and spacing
+- Use inline styles when referencing CSS variables (Tailwind cannot interpolate them)
+- Border radius scale: 6px (small), 8px (default), 10–12px (cards), 16px (large panels)
+
+### AI providers (M3+)
+NEVER import `openai`, `@anthropic-ai/sdk`, or any AI SDK outside of `src/lib/ai/provider.ts`.
+This is the single abstraction point. Everything else calls `provider.ts`.
+
+---
+
+## Imports — Path Aliases
+
+Always use `@/` alias. Never use relative paths that go up more than one level.
+
+```typescript
+// ✅ correct
+import { db } from "@/lib/db"
+import { cn } from "@/lib/utils"
+import type { ActiveBrand } from "@/types"
+
+// ❌ wrong
+import { db } from "../../lib/db"
+```
+
+---
+
+## What Cursor Should Never Do
+
+- Create a new folder not in the spec above without a comment explaining why
+- Use `localStorage` or `sessionStorage`
+- Fetch data inside a component with `useEffect`
+- Write a raw `fetch()` call to an internal Next.js API route (use Server Actions or direct db calls)
+- Add a new npm package without a comment saying why it's needed and what it replaces
+- Write `// TODO`, `// FIXME` or placeholder logic in production files
+- Use `console.log` in production code (use `console.error` for real errors only)
+- Generate index barrel files (`index.ts` that re-exports everything) — import directly
+
+---
+
+## Prisma — Usage Rules
+
+```typescript
+// Always import from the singleton
+import { db } from "@/lib/db"
+
+// Always use select to avoid over-fetching
+const brand = await db.brand.findUnique({
+  where: { id },
+  select: { id: true, name: true, slug: true } // only what you need
+})
+
+// Use transactions for multi-step writes
+await db.$transaction([
+  db.brand.update(...),
+  db.brandMember.create(...)
+])
+```
+
+Never use `include` with deeply nested relations unless you explicitly need all the nested data.
+
+---
+
+## Error Handling
+
+- Server Actions return `{ errors }` or `{ message }` — never throw to the client
+- API routes return proper HTTP status codes with `{ error: string }` JSON body
+- Use `notFound()` from `next/navigation` for 404 cases in Server Components
+- Use `redirect()` for auth redirects — never `router.push()` in Server Components
+
+---
+
+## Current Milestone Focus
+
+**M2 — Brand Brain (in progress)**
+
+Files being built:
+- `src/app/(dashboard)/brands/[slug]/settings/page.tsx` — full Brand Brain form
+- `src/app/(dashboard)/brands/[slug]/settings/actions.ts` — update brand Server Action
+- `src/lib/brand-context.ts` — serialiser: `Brand → string` for AI system prompts
+- `src/app/api/brands/switch/route.ts` — sets active brand cookie
+
+When working in this milestone, every new file must reference the existing Brand model in `prisma/schema.prisma` — do not add fields to the schema without checking the full schema document first.
+
+---
+
+## Quick Lookups
+
+| Task | Where |
+|---|---|
+| Add a sidebar nav item | `src/lib/nav.ts` → `NAV_ITEMS` array |
+| Protect a new route | Already protected by middleware — add to `PUBLIC_ROUTES` to unprotect |
+| Add a new Zod schema | Co-locate in the `actions.ts` for that feature |
+| Change the brand accent colour | It's set as inline style on the dashboard layout root div |
+| Add a new AI employee | `src/lib/ai/employees/[employee-name].ts` (M3) |
+| Add a Prisma table | Check full schema doc → write migration → run `npm run db:migrate` |
