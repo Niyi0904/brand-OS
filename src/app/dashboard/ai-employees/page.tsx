@@ -57,9 +57,11 @@ export default async function AIEmployeesPage() {
             Specialist operators that inherit the selected Brand Brain before every task.
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4" />
-          Create employee
+        <Button className="w-full sm:w-auto" asChild>
+          <Link href="/dashboard/ai-employees/new">
+            <Plus className="h-4 w-4" />
+            Create employee
+          </Link>
         </Button>
       </section>
 
@@ -156,12 +158,12 @@ function EmployeeCard({ id, name, title, description, strength, workload, isSyst
           <span className="mos-warning-pill rounded-full px-3 py-1 text-xs font-medium">M3 preview</span>
         </div>
 
-        <Button variant="outline" className="w-full" asChild>
-          <Link href={`/dashboard/employees/${id}/chat`}>
-            <MessageSquare className="h-4 w-4" />
-            Start task
-          </Link>
-        </Button>
+          <Button variant="outline" className="w-full" asChild>
+            <Link href={`/dashboard/ai-employees/${id}/chat`}>
+              <MessageSquare className="h-4 w-4" />
+              Start task
+            </Link>
+          </Button>
       </CardContent>
     </Card>
   );

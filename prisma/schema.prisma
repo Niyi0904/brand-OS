@@ -125,6 +125,7 @@ model BrandBrain {
   id                String   @id @default(cuid())
   brandId           String   @unique
   
+  // M1 legacy fields (kept for backward compatibility)
   mission           String?  @db.Text
   vision            String?  @db.Text
   values            String?  @db.Text
@@ -146,7 +147,54 @@ model BrandBrain {
   locations         String?  @db.Text
   faqs              String?  @db.Text
   brandRules        String?  @db.Text
-  
+
+  // M2 Brand Brain spec fields — Section 1: Brand identity
+  tagline           String?  @db.Text
+  websiteUrl        String?  @db.Text
+  industry          String?  @db.Text
+  foundedYear       Int?
+
+  // M2 — Section 2: Mission & values
+  missionStatement  String?  @db.Text
+  coreValues        String?  @db.Text  // JSON array of strings (max 5)
+  brandPromise      String?  @db.Text
+
+  // M2 — Section 3: Voice & tone
+  voiceAdjectives   String?  @db.Text  // JSON array of strings (max 6)
+  toneDescription   String?  @db.Text
+  writingStyleNotes String?  @db.Text
+  thingsToAvoid     String?  @db.Text
+
+  // M2 — Section 4: Target audience
+  primaryAudience   String?  @db.Text
+  audienceDemographics String? @db.Text
+  audiencePainPoints String? @db.Text
+  audienceVocabulary String? @db.Text
+
+  // M2 — Section 5: Products & services
+  productList       String?  @db.Text  // JSON array of {name, oneLiner}[]
+  pricingTier       String?  @db.Text
+  keyDifferentiators String? @db.Text
+
+  // M2 — Section 6: Competitors
+  competitorList    String?  @db.Text  // JSON array of {name, positioningNote}[]
+  competitiveAdvantages String? @db.Text
+  thingsNeverDo     String?  @db.Text
+
+  // M2 — Section 7: SEO & keywords
+  primaryKeywords   String?  @db.Text  // JSON array (max 10)
+  secondaryKeywords String?  @db.Text  // JSON array (max 20)
+  topicsToOwn       String?  @db.Text
+  topicsToAvoid     String?  @db.Text
+
+  // M2 — Section 8: FAQs
+  faqList           String?  @db.Text  // JSON array of {question, answer}[]
+
+  // M2 — Section 9: Additional context
+  freeformNotes     String?  @db.Text
+  contentExamples   String?  @db.Text
+  brandStory        String?  @db.Text
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -171,6 +219,7 @@ model AIEmployee {
   
   isSystem    Boolean  @default(false)
   isCustom    Boolean  @default(false)
+  accentColor String? @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

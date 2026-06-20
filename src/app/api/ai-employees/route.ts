@@ -5,6 +5,8 @@ import { aiEmployeeSchema } from "@/lib/validations";
 import { EmployeeService } from "@/lib/ai-employees/employee-service";
 import { validateCsrf, csrfError } from "@/lib/csrf";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const session = await auth();

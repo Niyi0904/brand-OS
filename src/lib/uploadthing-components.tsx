@@ -9,9 +9,10 @@ type UploadDropzoneProps = {
   endpoint: keyof OurFileRouter;
   onClientUploadComplete?: (res: { url: string; name: string }[]) => void;
   onUploadError?: (error: Error) => void;
+  onUploadBegin?: () => void;
 };
 
-export function UploadDropzone({ endpoint, onClientUploadComplete, onUploadError }: UploadDropzoneProps) {
+export function UploadDropzone({ endpoint, onClientUploadComplete, onUploadError, onUploadBegin }: UploadDropzoneProps) {
   return (
     <UTUploadDropzone
       endpoint={endpoint}
@@ -23,6 +24,7 @@ export function UploadDropzone({ endpoint, onClientUploadComplete, onUploadError
       onUploadError={(error: Error) => {
         onUploadError?.(error);
       }}
+      onUploadBegin={onUploadBegin}
     />
   );
 }

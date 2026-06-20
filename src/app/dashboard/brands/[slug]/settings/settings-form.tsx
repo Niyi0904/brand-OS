@@ -1,13 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { Save, Upload } from "lucide-react";
+import { useState } from "react";
+import { Save, Upload, Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UploadDropzone } from "@/lib/uploadthing-components";
 import { updateBrandBrainAction, type SettingsActionState } from "./actions";
 
 type SectionConfig = {
@@ -28,6 +30,9 @@ export function SettingsForm({ slug, sections, brain, logoUrl }: SettingsFormPro
   const initialState: SettingsActionState = {};
   const [state, formAction] = useActionState(updateBrandBrainAction, initialState);
   const router = useRouter();
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl);
+  const [hasFileSelected, setHasFileSelected] = useState(false);
 
   return (
     <form action={formAction} className="grid gap-5 lg:grid-cols-2">
@@ -52,15 +57,63 @@ export function SettingsForm({ slug, sections, brain, logoUrl }: SettingsFormPro
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Brand logo" className="h-16 w-16 rounded-lg border border-[var(--color-border)] object-cover" />
+            {selectedLogo ? (
+              <img src={selectedLogo} alt="Brand logo" className="h-16 w-16 rounded-lg border border-[var(--color-border)] object-cover" />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] text-xs text-[var(--color-text-tertiary)]">
                 No logo
               </div>
             )}
-            <div className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-sm text-[var(--color-text-secondary)]">
-              Logo upload is configured via UploadThing. Use the upload endpoint at <code>/api/uploadthing</code>.
+            <div className="flex-1">
+              <div className={`rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+                hasFileSelected
+                  ? "border-[var(--brand-accent)] bg-[var(--color-surface-2)]"
+                  : "border-[var(--color-border)]"
+              }`}>
+                <UploadDropzone
+                  endpoint="brandLogo"
+                  onClientUploadComplete={(res) => {
+                    if (res && res[0]) {
+                      setSelectedLogo(res[0].url);
+                      document.getElementById("logo-input")?.setAttribute("value", res[0].url);
+                      setUploadingLogo(false);
+                      setHasFileSelected(false);
+                    }
+                  }}
+                  onUploadError={(error) => {
+                    console.error("Upload error:", error);
+                    setUploadingLogo(false);
+                    setHasFileSelected(false);
+                  }}
+                  onUploadBegin={() => {
+                    setUploadingLogo(true);
+                    setHasFileSelected(true);
+                  }}
+                />
+                {!uploadingLogo && !selectedLogo && !hasFileSelected && (
+                  <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">
+                    Drop an image here or click to browse
+                  </p>
+                )}
+                {hasFileSelected && !uploadingLogo && !selectedLogo && (
+                  <p className="mt-2 flex items-center justify-center gap-1 text-xs text-[var(--brand-accent)]">
+                    <Check className="h-3 w-3" />
+                    File selected — ready to upload
+                  </p>
+                )}
+              </div>
+              {uploadingLogo && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Uploading...
+                </div>
+              )}
+              {selectedLogo && !uploadingLogo && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-green-400">
+                  <Check className="h-3 w-3" />
+                  Logo uploaded successfully
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -103,6 +156,7 @@ export function SettingsForm({ slug, sections, brain, logoUrl }: SettingsFormPro
           Save changes
         </Button>
       </div>
+      <input type="hidden" name="logo" value={selectedLogo ?? ""} id="logo-input" />
     </form>
   );
 }
