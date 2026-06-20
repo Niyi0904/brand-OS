@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { brandSchema } from "@/lib/validations";
+import { validateCsrf, csrfError } from "@/lib/csrf";
 
 export async function GET(req: Request) {
   try {
@@ -33,6 +34,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    if (!validateCsrf(req as any)) return csrfError();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,3 +1,6 @@
+"use client";
+
+import { useActionState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Building2, CheckCircle2, Palette, Sparkles, Users } from "lucide-react";
 
@@ -5,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createBrandAction, type CreateBrandActionState } from "./actions";
+
+const initialState: CreateBrandActionState = {};
 
 const setupSteps = [
   {
@@ -25,6 +31,8 @@ const setupSteps = [
 ];
 
 export default function NewBrandPage() {
+  const [state, formAction, pending] = useActionState(createBrandAction, initialState);
+
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[0.95fr_0.55fr]">
       <section className="space-y-6">
@@ -51,10 +59,21 @@ export default function NewBrandPage() {
             <CardDescription>These fields create the first version of your Brand Brain.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="grid gap-5">
+            <form action={formAction} className="grid gap-5">
+              {state?.message && !state.errors ? (
+                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {state.message}
+                </div>
+              ) : null}
               <div className="grid gap-5 md:grid-cols-2">
-                <Field id="name" label="Brand name" placeholder="TouchedBy02" />
-                <Field id="slug" label="Workspace slug" placeholder="touchedby02" helper="Used in workspace URLs and internal references." />
+                <Field id="name" label="Brand name" placeholder="TouchedBy02" error={state?.errors?.name?.[0]} />
+                <Field
+                  id="slug"
+                  label="Workspace slug"
+                  placeholder="touchedby02"
+                  helper="Used in workspace URLs and internal references."
+                  error={state?.errors?.slug?.[0]}
+                />
               </div>
 
               <Field id="description" label="Positioning summary" placeholder="Fashion and lifestyle brand for expressive everyday style." />
@@ -69,9 +88,9 @@ export default function NewBrandPage() {
                 <p className="mos-muted text-sm">
                   You can expand mission, voice, offers, and SEO context after creation.
                 </p>
-                <Button type="submit" className="sm:min-w-40">
+                <Button type="submit" className="sm:min-w-40" disabled={pending}>
                   <Sparkles className="h-4 w-4" />
-                  Create brand
+                  {pending ? "Creating..." : "Create brand"}
                 </Button>
               </div>
             </form>
@@ -117,12 +136,13 @@ export default function NewBrandPage() {
   );
 }
 
-function Field({ id, label, placeholder, helper }: { id: string; label: string; placeholder: string; helper?: string }) {
+function Field({ id, label, placeholder, helper, error }: { id: string; label: string; placeholder: string; helper?: string; error?: string }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} placeholder={placeholder} />
+      <Input id={id} name={id} placeholder={placeholder} />
       {helper ? <p className="mos-subtle text-xs">{helper}</p> : null}
+      {error ? <p className="text-xs text-red-400">{error}</p> : null}
     </div>
   );
 }

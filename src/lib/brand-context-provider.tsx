@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 
-interface Brand {
+export interface Brand {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  logo?: string;
+  description?: string | null;
+  logo?: string | null;
 }
 
 interface BrandContextType {
@@ -15,6 +15,7 @@ interface BrandContextType {
   setCurrentBrand: (brand: Brand | null) => void;
   brands: Brand[];
   setBrands: (brands: Brand[]) => void;
+  initialize: (brands: Brand[], currentBrandId: string | null) => void;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -23,9 +24,19 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const [currentBrand, setCurrentBrand] = useState<Brand | null>(null);
   const [brands, setBrands] = useState<Brand[]>([]);
 
+  const initialize = useCallback((initialBrands: Brand[], currentBrandId: string | null) => {
+    setBrands(initialBrands);
+    if (currentBrandId) {
+      const found = initialBrands.find((b) => b.id === currentBrandId);
+      if (found) setCurrentBrand(found);
+    } else if (initialBrands.length > 0) {
+      setCurrentBrand(initialBrands[0]);
+    }
+  }, []);
+
   return (
     <BrandContext.Provider
-      value={{ currentBrand, setCurrentBrand, brands, setBrands }}
+      value={{ currentBrand, setCurrentBrand, brands, setBrands, initialize }}
     >
       {children}
     </BrandContext.Provider>

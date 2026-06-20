@@ -10,13 +10,18 @@ import {
   FolderOpen,
   LayoutDashboard,
   Search,
+  Settings,
   Sparkles,
   Target,
   User,
 } from "lucide-react";
 
-import { auth } from "@/auth";
-import { BrandProvider } from "@/lib/brand-context";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { BrandProvider } from "@/lib/brand-context-provider";
+import { BrandProviderInitializer } from "@/components/layout/BrandProviderInitializer";
+import { getUserSubscription } from "@/lib/subscription";
+import { SubscriptionGuard } from "@/components/layout/SubscriptionGuard";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -44,19 +49,34 @@ const intelligenceNavItems: NavItemConfig[] = [
   { href: "/dashboard/seo", label: "SEO", icon: <Search />, status: "Soon" },
 ];
 
+const systemNavItems: NavItemConfig[] = [
+  { href: "/dashboard/settings", label: "Settings", icon: <Settings /> },
+];
+
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
   const session = await auth();
 
-  if (!session) {
+  if (!session?.user?.id) {
     redirect("/auth/signin");
   }
 
+  const subscription = await getUserSubscription(session.user.id);
+
+  // Fetch brands for the BrandProvider initializer
+  const brands = await prisma.brand.findMany({
+    where: { userId: session.user.id },
+    select: { id: true, name: true, slug: true, description: true, logo: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <BrandProvider>
-      <div className="mos-app-shell min-h-screen">
+      <BrandProviderInitializer brands={brands} />
+      <SubscriptionGuard subscription={subscription}>
+        <div className="mos-app-shell min-h-screen">
         <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">
           <div className="flex h-full flex-col p-5">
-            <Link href="/dashboard" className="mb-7 flex items-center gap-3">
+            <Link href="/dashboard" className="mb-7 flex items-center gap-3 shrink-0">
               <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg">
                 <Sparkles className="h-5 w-5" />
               </div>
@@ -66,10 +86,13 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               </div>
             </Link>
 
-            <SidebarSection label="Workspace" items={primaryNavItems} />
-            <SidebarSection label="Intelligence" items={intelligenceNavItems} />
+            <div className="flex-1 overflow-y-auto scroll-smooth overscroll-contain -mx-5 px-5">
+              <SidebarSection label="Workspace" items={primaryNavItems} />
+              <SidebarSection label="Intelligence" items={intelligenceNavItems} />
+              <SidebarSection label="System" items={systemNavItems} />
+            </div>
 
-            <div className="mt-auto space-y-4">
+            <div className="mt-auto space-y-4 shrink-0">
               <div className="mos-panel p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4 text-[var(--brand-accent-strong)]" />
@@ -80,15 +103,22 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 border-t pt-4 mos-divider">
-                <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-full">
-                  <User className="h-4 w-4" />
+              <Link 
+                href="/dashboard/settings"
+                className="flex items-center gap-3 border-t pt-4 mos-divider hover:opacity-80 transition-opacity"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-3)]">
+                  {session.user?.image ? (
+                    <img src={session.user.image} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-4 w-4 text-[var(--color-text-secondary)]" />
+                  )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{session.user?.name ?? "Marketing lead"}</p>
                   <p className="mos-subtle truncate text-xs">{session.user?.email ?? "Signed in"}</p>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </aside>
@@ -128,6 +158,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>
+      </SubscriptionGuard>
     </BrandProvider>
   );
 }

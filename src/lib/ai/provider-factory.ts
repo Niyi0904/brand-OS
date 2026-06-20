@@ -9,7 +9,6 @@ import { GeminiProvider } from "./providers/gemini";
 import { OpenRouterProvider } from "./providers/openrouter";
 
 export class AIProviderFactory {
-  private static providers: Map<AIProvider, AIProviderInterface> = new Map();
   private static defaultProvider: AIProvider = "openai";
 
   static setDefaultProvider(provider: AIProvider): void {
@@ -22,14 +21,8 @@ export class AIProviderFactory {
 
   static getProvider(provider?: AIProvider): AIProviderInterface {
     const providerType = provider || this.defaultProvider;
-
-    if (!this.providers.has(providerType)) {
-      const config = this.getProviderConfig(providerType);
-      const instance = this.createProvider(providerType, config);
-      this.providers.set(providerType, instance);
-    }
-
-    return this.providers.get(providerType)!;
+    const config = this.getProviderConfig(providerType);
+    return this.createProvider(providerType, config);
   }
 
   private static createProvider(
@@ -90,9 +83,5 @@ export class AIProviderFactory {
   static getAvailableProviders(): AIProvider[] {
     const providers: AIProvider[] = ["openai", "anthropic", "gemini", "openrouter"];
     return providers.filter((p) => this.validateProvider(p));
-  }
-
-  static clearCache(): void {
-    this.providers.clear();
   }
 }

@@ -1,15 +1,52 @@
 "use client";
 
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Mail, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { validateSignInFields, type SignInActionState } from "./actions";
+
+const initialState: SignInActionState = {};
 
 export default function SignInPage() {
+  const router = useRouter();
+  const credentialsRef = useRef({ email: "", password: "" });
+  const [state, formAction, pending] = useActionState(
+    async (prevState: SignInActionState, formData: FormData) => {
+    credentialsRef.current = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
+    return validateSignInFields(prevState, formData);
+  },
+  initialState
+  );
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!state.errors && state.message !== undefined) {
+      const { email, password } = credentialsRef.current;
+      signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      }).then((result) => {
+        if (result?.error) {
+          setServerError("Invalid email or password");
+        } else {
+          router.push("/dashboard");
+          router.refresh();
+        }
+      });
+    }
+  }, [state, router]);
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_440px] lg:items-center">
@@ -39,23 +76,48 @@ export default function SignInPage() {
             <CardDescription>Sign in to your MarketingOS workspace.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <form className="space-y-4">
+            <form id="signin-form" action={formAction} className="space-y-4">
+              {state?.message || serverError ? (
+                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {serverError || state.message}
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="email" type="email" placeholder="name@example.com" className="pl-10" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    className="pl-10"
+                    required
+                  />
                 </div>
+                {state?.errors?.email ? (
+                  <p className="text-xs text-red-400">{state.errors.email[0]}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="password" type="password" placeholder="Password" className="pl-10" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Password"
+                    className="pl-10"
+                    required
+                  />
                 </div>
+                {state?.errors?.password ? (
+                  <p className="text-xs text-red-400">{state.errors.password[0]}</p>
+                ) : null}
               </div>
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={pending}>
+                {pending ? "Signing in..." : "Sign in"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </form>
@@ -70,10 +132,10 @@ export default function SignInPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" type="button" onClick={() => signIn("google")}>
+              <Button variant="outline" type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
                 Google
               </Button>
-              <Button variant="outline" type="button" onClick={() => signIn("github")}>
+              <Button variant="outline" type="button" onClick={() => signIn("github", { callbackUrl: "/dashboard" })}>
                 GitHub
               </Button>
             </div>
@@ -83,7 +145,7 @@ export default function SignInPage() {
               Forgot your password?
             </Link>
             <p className="mos-muted">
-              Don&apos;t have an account?{" "}
+              Don't have an account?{" "}
               <Link href="/auth/signup" className="text-[var(--brand-accent-strong)] hover:underline">
                 Sign up
               </Link>

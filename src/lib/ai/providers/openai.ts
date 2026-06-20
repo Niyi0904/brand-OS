@@ -104,7 +104,7 @@ export class OpenAIProvider implements AIProviderInterface {
     aiError.provider = this.provider;
 
     if (error instanceof OpenAI.APIError) {
-      aiError.code = error.code;
+      aiError.code = error.code ?? undefined;
       aiError.statusCode = error.status;
     }
 

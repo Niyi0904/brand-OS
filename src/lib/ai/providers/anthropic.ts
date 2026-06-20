@@ -105,7 +105,8 @@ export class AnthropicProvider implements AIProviderInterface {
     aiError.provider = this.provider;
 
     if (error instanceof Anthropic.APIError) {
-      aiError.code = error.error?.type;
+      const apiError = error.error as { type?: string } | undefined;
+      aiError.code = apiError?.type;
       aiError.statusCode = error.status;
     }
 

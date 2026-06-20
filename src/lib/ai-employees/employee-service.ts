@@ -1,24 +1,38 @@
 import { prisma } from "@/lib/db";
 import { BrandBrain } from "@prisma/client";
 import { AIProviderFactory, AIMessage, AICompletionOptions } from "@/lib/ai";
+import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
 
 export class EmployeeService {
   static async initializeDefaultEmployees(userId: string, organizationId?: string) {
     const { DEFAULT_AI_EMPLOYEES } = await import("./default-employees");
 
     for (const employeeData of DEFAULT_AI_EMPLOYEES) {
-      await prisma.aIEmployee.upsert({
+      const name = employeeData.name;
+      if (!name) continue;
+
+      // Look up by name + userId to avoid fragile composite IDs
+      const existing = await prisma.aIEmployee.findFirst({
         where: {
-          id: `${employeeData.name?.toLowerCase().replace(/\s+/g, "-")}-${userId}`,
-        },
-        update: {},
-        create: {
-          ...employeeData,
-          id: `${employeeData.name?.toLowerCase().replace(/\s+/g, "-")}-${userId}`,
+          name,
           userId,
-          organizationId,
+          isSystem: true,
         },
+        select: { id: true },
       });
+
+      if (!existing) {
+        await prisma.aIEmployee.create({
+          data: {
+            ...employeeData,
+            userId,
+            organizationId,
+            isSystem: true,
+            isCustom: false,
+            name: employeeData.name ?? "",
+          } as any,
+        });
+      }
     }
   }
 
@@ -44,36 +58,8 @@ export class EmployeeService {
   }
 
   private static injectBrandBrain(prompt: string, brandBrain: BrandBrain): string {
-    const brandContext = this.formatBrandBrain(brandBrain);
+    const brandContext = serializeBrandForPrompt(brandBrain);
     return prompt.replace("{{BRAND_BRAIN}}", brandContext);
-  }
-
-  private static formatBrandBrain(brandBrain: BrandBrain): string {
-    const sections = [];
-
-    if (brandBrain.mission) sections.push(`## Mission\n${brandBrain.mission}`);
-    if (brandBrain.vision) sections.push(`## Vision\n${brandBrain.vision}`);
-    if (brandBrain.values) sections.push(`## Values\n${brandBrain.values}`);
-    if (brandBrain.targetAudience) sections.push(`## Target Audience\n${brandBrain.targetAudience}`);
-    if (brandBrain.customerPersonas) sections.push(`## Customer Personas\n${brandBrain.customerPersonas}`);
-    if (brandBrain.products) sections.push(`## Products\n${brandBrain.products}`);
-    if (brandBrain.services) sections.push(`## Services\n${brandBrain.services}`);
-    if (brandBrain.toneOfVoice) sections.push(`## Tone of Voice\n${brandBrain.toneOfVoice}`);
-    if (brandBrain.brandColors) sections.push(`## Brand Colors\n${brandBrain.brandColors}`);
-    if (brandBrain.typography) sections.push(`## Typography\n${brandBrain.typography}`);
-    if (brandBrain.competitors) sections.push(`## Competitors\n${brandBrain.competitors}`);
-    if (brandBrain.seoKeywords) sections.push(`## SEO Keywords\n${brandBrain.seoKeywords}`);
-    if (brandBrain.goals) sections.push(`## Goals\n${brandBrain.goals}`);
-    if (brandBrain.preferredPlatforms) sections.push(`## Preferred Platforms\n${brandBrain.preferredPlatforms}`);
-    if (brandBrain.writingStyle) sections.push(`## Writing Style\n${brandBrain.writingStyle}`);
-    if (brandBrain.marketingStrategy) sections.push(`## Marketing Strategy\n${brandBrain.marketingStrategy}`);
-    if (brandBrain.offers) sections.push(`## Offers\n${brandBrain.offers}`);
-    if (brandBrain.businessInfo) sections.push(`## Business Information\n${brandBrain.businessInfo}`);
-    if (brandBrain.locations) sections.push(`## Locations\n${brandBrain.locations}`);
-    if (brandBrain.faqs) sections.push(`## FAQs\n${brandBrain.faqs}`);
-    if (brandBrain.brandRules) sections.push(`## Brand Rules\n${brandBrain.brandRules}`);
-
-    return sections.join("\n\n");
   }
 
   static async executeEmployeeTask(
@@ -99,7 +85,7 @@ export class EmployeeService {
     userMessage: string,
     brandBrain?: BrandBrain | null,
     options?: AICompletionOptions
-  ): AsyncGenerator<string> {
+  ): Promise<AsyncGenerator<string>> {
     const systemPrompt = await this.getEmployeePrompt(employeeId, brandBrain);
     const provider = AIProviderFactory.getProvider();
 
@@ -110,10 +96,14 @@ export class EmployeeService {
 
     const stream = provider.stream(messages, options);
 
-    for await (const chunk of stream) {
-      if (!chunk.done) {
-        yield chunk.content;
+    async function* generate() {
+      for await (const chunk of stream) {
+        if (!chunk.done) {
+          yield chunk.content;
+        }
       }
     }
+
+    return generate();
   }
 }

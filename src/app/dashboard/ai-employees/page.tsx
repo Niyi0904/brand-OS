@@ -1,5 +1,9 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Bot, Copy, Edit, MessageSquare, MoreVertical, Plus, Sparkles, Trash2 } from "lucide-react";
 
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -9,67 +13,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type EmployeeCardProps = {
-  name: string;
-  title: string;
-  description: string;
-  strength: string;
-  workload: string;
-  isSystem?: boolean;
-};
+export default async function AIEmployeesPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/signin");
 
-const employees: EmployeeCardProps[] = [
-  {
-    name: "Marketing Director",
-    title: "Strategy and campaign leadership",
-    description: "Turns business goals into focused GTM plans, campaign briefs, and channel priorities.",
-    strength: "Strategy",
-    workload: "4 briefs",
-    isSystem: true,
-  },
-  {
-    name: "Content Director",
-    title: "Editorial strategy and production",
-    description: "Builds content angles, calendars, hooks, outlines, and platform-native variants.",
-    strength: "Content",
-    workload: "12 drafts",
-    isSystem: true,
-  },
-  {
-    name: "Creative Director",
-    title: "Brand expression and visual direction",
-    description: "Shapes campaign concepts, visual systems, creative prompts, and asset direction.",
-    strength: "Creative",
-    workload: "5 concepts",
-    isSystem: true,
-  },
-  {
-    name: "SEO Director",
-    title: "Search strategy and optimization",
-    description: "Finds keyword opportunities, briefs pages, and improves durable organic growth.",
-    strength: "SEO",
-    workload: "9 keywords",
-    isSystem: true,
-  },
-  {
-    name: "Sales Director",
-    title: "Revenue messaging and conversion",
-    description: "Refines offers, objections, email flows, scripts, and sales enablement assets.",
-    strength: "Revenue",
-    workload: "3 offers",
-    isSystem: true,
-  },
-  {
-    name: "Analytics Director",
-    title: "Measurement and insight",
-    description: "Summarizes performance, finds anomalies, and recommends the next experiment.",
-    strength: "Insights",
-    workload: "7 reports",
-    isSystem: true,
-  },
-];
+  const employees = await prisma.aIEmployee.findMany({
+    where: {
+      OR: [
+        { userId: session.user.id },
+        { isSystem: true },
+      ],
+    },
+    orderBy: [
+      { isSystem: "desc" },
+      { name: "asc" },
+    ],
+  });
 
-export default function AIEmployeesPage() {
+  // Count open conversations per employee
+  const employeeIds = employees.map((e) => e.id);
+  const conversationCounts = await prisma.conversation.groupBy({
+    by: ["employeeId"],
+    where: {
+      employeeId: { in: employeeIds },
+      userId: session.user.id,
+    },
+    _count: { id: true },
+  });
+
+  const countsMap = new Map(conversationCounts.map((c) => [c.employeeId, c._count.id]));
+
+  const totalOpenWork = employees.reduce((sum, e) => sum + (countsMap.get(e.id) || 0), 0);
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -89,21 +64,40 @@ export default function AIEmployeesPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <TeamSignal title="Available specialists" value="6" detail="System roles enabled" />
-        <TeamSignal title="Open work" value="40" detail="Drafts, briefs, reports" />
+        <TeamSignal title="Available specialists" value={`${employees.length}`} detail="Roles enabled" />
+        <TeamSignal title="Open work" value={`${totalOpenWork}`} detail="Active conversations" />
         <TeamSignal title="Context coverage" value="92%" detail="Brand Brain ready" />
       </section>
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {employees.map((employee) => (
-          <EmployeeCard key={employee.name} {...employee} />
+          <EmployeeCard
+            key={employee.id}
+            id={employee.id}
+            name={employee.name}
+            title={employee.title}
+            description={employee.description}
+            strength={employee.purpose || "General"}
+            workload={`${countsMap.get(employee.id) || 0} conversations`}
+            isSystem={employee.isSystem}
+          />
         ))}
       </section>
     </div>
   );
 }
 
-function EmployeeCard({ name, title, description, strength, workload, isSystem }: EmployeeCardProps) {
+type EmployeeCardData = {
+  id: string;
+  name: string;
+  title: string;
+  description?: string | null;
+  strength: string;
+  workload: string;
+  isSystem: boolean;
+};
+
+function EmployeeCard({ id, name, title, description, strength, workload, isSystem }: EmployeeCardData) {
   return (
     <Card className="mos-card-hover">
       <CardHeader>
@@ -143,7 +137,7 @@ function EmployeeCard({ name, title, description, strength, workload, isSystem }
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <p className="mos-muted min-h-[72px] text-sm leading-6">{description}</p>
+        <p className="mos-muted min-h-[72px] text-sm leading-6">{description || "No description provided."}</p>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="mos-panel p-3">
@@ -162,9 +156,11 @@ function EmployeeCard({ name, title, description, strength, workload, isSystem }
           <span className="mos-warning-pill rounded-full px-3 py-1 text-xs font-medium">M3 preview</span>
         </div>
 
-        <Button variant="outline" className="w-full">
-          <MessageSquare className="h-4 w-4" />
-          Start task
+        <Button variant="outline" className="w-full" asChild>
+          <Link href={`/dashboard/employees/${id}/chat`}>
+            <MessageSquare className="h-4 w-4" />
+            Start task
+          </Link>
         </Button>
       </CardContent>
     </Card>

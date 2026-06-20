@@ -1,36 +1,29 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
+import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, Brain, CheckCircle2, Megaphone, Palette, Save, Search, Target, Users } from "lucide-react";
 
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
+import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type BrandDetailPageProps = {
-  params: {
-    id: string;
-  };
-};
-
-type FieldConfig = {
-  id: string;
-  label: string;
-  placeholder: string;
-};
+import { updateBrandBrainAction, type SettingsActionState } from "./actions";
+import { SettingsForm } from "./settings-form";
 
 type SectionConfig = {
   title: string;
   description: string;
-  icon: ReactNode;
-  fields: FieldConfig[];
+  icon: React.ReactNode;
+  fields: { id: string; label: string; placeholder: string }[];
 };
 
 const sections: SectionConfig[] = [
   {
     title: "Core identity",
     description: "The durable facts every employee should know before producing work.",
-    icon: <Brain />,
+    icon: <Brain className="h-4 w-4" />,
     fields: [
       { id: "mission", label: "Mission", placeholder: "What the brand exists to do" },
       { id: "vision", label: "Vision", placeholder: "What the brand is building toward" },
@@ -40,7 +33,7 @@ const sections: SectionConfig[] = [
   {
     title: "Audience",
     description: "The people, segments, and buying context the brand serves.",
-    icon: <Users />,
+    icon: <Users className="h-4 w-4" />,
     fields: [
       { id: "targetAudience", label: "Target audience", placeholder: "Primary customer segment" },
       { id: "customerPersonas", label: "Customer personas", placeholder: "Personas, motivations, objections" },
@@ -50,7 +43,7 @@ const sections: SectionConfig[] = [
   {
     title: "Brand voice",
     description: "How the brand sounds, looks, and behaves in public.",
-    icon: <Palette />,
+    icon: <Palette className="h-4 w-4" />,
     fields: [
       { id: "toneOfVoice", label: "Tone of voice", placeholder: "Professional, friendly, bold" },
       { id: "writingStyle", label: "Writing style", placeholder: "Copy rules and examples" },
@@ -61,7 +54,7 @@ const sections: SectionConfig[] = [
   {
     title: "Market position",
     description: "Competitive context, search priorities, and channel choices.",
-    icon: <Search />,
+    icon: <Search className="h-4 w-4" />,
     fields: [
       { id: "competitors", label: "Competitors", placeholder: "Main competitors and alternatives" },
       { id: "seoKeywords", label: "SEO keywords", placeholder: "Priority keywords and themes" },
@@ -71,7 +64,7 @@ const sections: SectionConfig[] = [
   {
     title: "Marketing strategy",
     description: "Goals, offers, and business context for campaign decisions.",
-    icon: <Target />,
+    icon: <Target className="h-4 w-4" />,
     fields: [
       { id: "marketingStrategy", label: "Marketing strategy", placeholder: "Go-to-market approach" },
       { id: "goals", label: "Goals", placeholder: "Marketing goals and objectives" },
@@ -82,7 +75,7 @@ const sections: SectionConfig[] = [
   {
     title: "Rules and support",
     description: "Operational details that prevent off-brand or inaccurate AI output.",
-    icon: <Megaphone />,
+    icon: <Megaphone className="h-4 w-4" />,
     fields: [
       { id: "locations", label: "Locations", placeholder: "Business locations and regions" },
       { id: "faqs", label: "FAQs", placeholder: "Common customer questions" },
@@ -91,20 +84,45 @@ const sections: SectionConfig[] = [
   },
 ];
 
-export default function BrandDetailPage({ params }: BrandDetailPageProps) {
+type SettingsPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export default async function BrandSettingsPage({ params }: SettingsPageProps) {
+  const { slug } = await params;
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/signin");
+
+  const brand = await prisma.brand.findFirst({
+    where: { slug, userId: session.user.id },
+    include: { brandBrain: true },
+  });
+
+  if (!brand) notFound();
+
+  const brain = brand.brandBrain;
+  const completeness = computeBrandBrainCompleteness(brain);
+  const promptPreview = serializeBrandForPrompt(brain);
+  const brainFields = brain
+    ? Object.fromEntries(
+        Object.entries(brain).filter(([, value]) => typeof value === "string" || value === null)
+      ) as Record<string, string | null>
+    : null;
+  const promptPreviewText = typeof promptPreview === "string" ? promptPreview : JSON.stringify(promptPreview, null, 2);
+
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6 xl:grid-cols-[1fr_320px]">
       <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
             <Button variant="ghost" size="icon" asChild>
-              <Link href="/dashboard/brands" aria-label="Back to brands">
+              <a href="/dashboard/brands" aria-label="Back to brands">
                 <ArrowLeft className="h-4 w-4" />
-              </Link>
+              </a>
             </Button>
             <div>
               <div className="mos-pill mb-3 inline-flex rounded-full px-3 py-1 text-xs font-medium">
-                Brand Brain: {params.id}
+                Brand Brain: {brand.name}
               </div>
               <h1 className="text-3xl font-semibold leading-tight">Configure Brand Brain</h1>
               <p className="mos-muted mt-2 max-w-2xl text-sm leading-6">
@@ -112,17 +130,9 @@ export default function BrandDetailPage({ params }: BrandDetailPageProps) {
               </p>
             </div>
           </div>
-          <Button>
-            <Save className="h-4 w-4" />
-            Save changes
-          </Button>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          {sections.map((section) => (
-            <BrandSection key={section.title} section={section} />
-          ))}
-        </div>
+        <SettingsForm slug={slug} sections={sections} brain={brainFields} logoUrl={brand.logo} />
       </section>
 
       <aside className="space-y-6">
@@ -134,17 +144,29 @@ export default function BrandDetailPage({ params }: BrandDetailPageProps) {
           <CardContent className="space-y-5">
             <div>
               <div className="flex items-end gap-2">
-                <span className="text-5xl font-semibold">88</span>
+                <span className="text-5xl font-semibold">{completeness}</span>
                 <span className="mos-muted mb-2 text-sm">/100</span>
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-                <div className="h-full w-[88%] rounded-full bg-[var(--brand-accent)]" />
+                <div className="h-full rounded-full bg-[var(--brand-accent)]" style={{ width: `${completeness}%` }} />
               </div>
             </div>
-            <StatusRow label="Identity" value="Complete" />
-            <StatusRow label="Audience" value="Strong" />
-            <StatusRow label="Offers" value="Needs refresh" warning />
-            <StatusRow label="FAQs" value="Sparse" warning />
+            <StatusRow label="Identity" value={brain?.mission ? "Complete" : "Incomplete"} />
+            <StatusRow label="Audience" value={brain?.targetAudience ? "Strong" : "Needs work"} />
+            <StatusRow label="Offers" value={brain?.offers ? "Current" : "Needs refresh"} warning={!brain?.offers} />
+            <StatusRow label="FAQs" value={brain?.faqs ? "Complete" : "Sparse"} warning={!brain?.faqs} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI prompt preview</CardTitle>
+            <CardDescription>What employees see before every task.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre className="mos-panel max-h-80 overflow-auto rounded-lg p-4 text-xs leading-5 text-[var(--color-text-secondary)]">
+              {promptPreviewText || "No brand context yet."}
+            </pre>
           </CardContent>
         </Card>
 
@@ -154,40 +176,14 @@ export default function BrandDetailPage({ params }: BrandDetailPageProps) {
             <CardDescription>Before asking employees for production work.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <ChecklistItem label="Current offer is accurate" />
-            <ChecklistItem label="Audience objections are captured" />
-            <ChecklistItem label="Voice examples are up to date" />
-            <ChecklistItem label="Restricted claims are listed" />
+            <ChecklistItem label="Current offer is accurate" checked={!!brain?.offers} />
+            <ChecklistItem label="Audience objections are captured" checked={!!brain?.customerPersonas} />
+            <ChecklistItem label="Voice examples are up to date" checked={!!brain?.toneOfVoice} />
+            <ChecklistItem label="Restricted claims are listed" checked={!!brain?.brandRules} />
           </CardContent>
         </Card>
       </aside>
     </div>
-  );
-}
-
-function BrandSection({ section }: { section: SectionConfig }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="mb-3 flex items-center gap-3">
-          <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4">
-            {section.icon}
-          </div>
-          <div>
-            <CardTitle>{section.title}</CardTitle>
-            <CardDescription>{section.description}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {section.fields.map((field) => (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>{field.label}</Label>
-            <Input id={field.id} placeholder={field.placeholder} />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -202,11 +198,11 @@ function StatusRow({ label, value, warning = false }: { label: string; value: st
   );
 }
 
-function ChecklistItem({ label }: { label: string }) {
+function ChecklistItem({ label, checked }: { label: string; checked: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <CheckCircle2 className="h-4 w-4 text-[var(--color-positive)]" />
-      <span className="mos-muted text-sm">{label}</span>
+      <CheckCircle2 className={`h-4 w-4 ${checked ? "text-[var(--color-positive)]" : "text-[var(--color-text-tertiary)]"}`} />
+      <span className={`text-sm ${checked ? "mos-muted" : "mos-subtle"}`}>{label}</span>
     </div>
   );
 }

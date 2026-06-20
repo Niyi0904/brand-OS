@@ -1,4 +1,5 @@
-import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
@@ -7,8 +8,9 @@ import { prisma } from "./db";
 import { compare } from "bcryptjs";
 import { signInSchema } from "./validations";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(prisma) as any,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
@@ -35,30 +37,45 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error("[AUTH DEBUG MISSING CREDENTIALS] Missing email or password");
           throw new Error("Invalid credentials");
         }
 
         const validatedFields = signInSchema.safeParse(credentials);
         if (!validatedFields.success) {
+          console.error("[AUTH DEBUG ZOD VALIDATION] Validation failed:", validatedFields.error.flatten().fieldErrors);
           throw new Error("Invalid credentials");
         }
+
+        const email = validatedFields.data.email as string;
+        const password = validatedFields.data.password as string;
+        console.error("[AUTH DEBUG ATTEMPT LOGIN] Attempting login for email:", email, "password length:", password.length);
 
         const user = await prisma.user.findUnique({
           where: {
-            email: credentials.email,
+            email,
           },
         });
 
+        console.error("[AUTH DEBUG] User found:", !!user, "has password:", !!user?.password);
+
         if (!user || !user.password) {
+          console.error("[AUTH DEBUG] User not found or no password");
           throw new Error("Invalid credentials");
         }
 
-        const passwordMatch = await compare(credentials.password, user.password);
+        const passwordMatch = await compare(password, user.password);
+        console.error("[AUTH DEBUG] Password match:", passwordMatch);
         if (!passwordMatch) {
           throw new Error("Invalid credentials");
         }
 
-        return user;
+        return {
+          id: user.id,
+          name: user.name ?? "",
+          email: user.email,
+          image: user.image ?? "",
+        } as any;
       },
     }),
   ],
@@ -97,3 +114,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+export const { handlers, auth } = NextAuth(authOptions);

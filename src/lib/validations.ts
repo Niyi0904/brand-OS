@@ -69,6 +69,7 @@ export const contentItemSchema = z.object({
 
 // AI Employee validations
 export const aiEmployeeSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(2, "Name must be at least 2 characters"),
   title: z.string().min(2, "Title must be at least 2 characters"),
   description: z.string().optional(),

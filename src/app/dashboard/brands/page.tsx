@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowUpRight, Building2, CheckCircle2, Edit, MoreVertical, Plus, Trash2 } from "lucide-react";
 
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -10,43 +13,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type BrandCardProps = {
-  name: string;
-  slug: string;
-  description: string;
-  audience: string;
-  healthScore: number;
-  accent: string;
-};
+function computeCompleteness(brandBrain: { [key: string]: unknown } | null): number {
+  if (!brandBrain) return 0;
+  const fields = [
+    "mission", "vision", "values", "targetAudience", "customerPersonas",
+    "products", "services", "toneOfVoice", "brandColors", "typography",
+    "competitors", "seoKeywords", "goals", "preferredPlatforms", "writingStyle",
+    "marketingStrategy", "offers", "businessInfo", "locations", "faqs", "brandRules",
+  ];
+  const filled = fields.filter((f) => brandBrain[f] !== null && brandBrain[f] !== "" && brandBrain[f] !== undefined);
+  return Math.round((filled.length / fields.length) * 100);
+}
 
-const brands: BrandCardProps[] = [
-  {
-    name: "Nike",
-    slug: "nike",
-    description: "Athletic footwear and apparel with performance-led campaigns.",
-    audience: "Sport and lifestyle buyers",
-    healthScore: 92,
-    accent: "Performance",
-  },
-  {
-    name: "Apple",
-    slug: "apple",
-    description: "Consumer technology brand with premium product storytelling.",
-    audience: "Creators and professionals",
-    healthScore: 95,
-    accent: "Premium",
-  },
-  {
-    name: "TouchedBy02",
-    slug: "touchedby02",
-    description: "Fashion and lifestyle brand focused on expressive personal style.",
-    audience: "Style-conscious shoppers",
-    healthScore: 88,
-    accent: "Lifestyle",
-  },
-];
+export default async function BrandsPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/signin");
 
-export default function BrandsPage() {
+  const brands = await prisma.brand.findMany({
+    where: { userId: session.user.id },
+    include: { brandBrain: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const avgHealth = brands.length > 0
+    ? Math.round(brands.reduce((sum, b) => sum + computeCompleteness(b.brandBrain), 0) / brands.length)
+    : 0;
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -68,21 +60,38 @@ export default function BrandsPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <SummaryCard title="Brand Brains" value="3" detail="All active" />
-        <SummaryCard title="Average health" value="91%" detail="+4% this month" />
+        <SummaryCard title="Brand Brains" value={`${brands.length}`} detail="All active" />
+        <SummaryCard title="Average health" value={`${avgHealth}%`} detail="Brain completeness" />
         <SummaryCard title="AI ready" value="6 roles" detail="Using shared context" />
       </section>
 
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {brands.map((brand) => (
-          <BrandCard key={brand.slug} {...brand} />
+          <BrandCard
+            key={brand.id}
+            id={brand.id}
+            name={brand.name}
+            slug={brand.slug}
+            description={brand.description}
+            brandBrain={brand.brandBrain}
+            healthScore={computeCompleteness(brand.brandBrain)}
+          />
         ))}
       </section>
     </div>
   );
 }
 
-function BrandCard({ name, slug, description, audience, healthScore, accent }: BrandCardProps) {
+type BrandCardData = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  brandBrain: unknown;
+  healthScore: number;
+};
+
+function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) {
   return (
     <Card className="mos-card-hover">
       <CardHeader>
@@ -103,13 +112,11 @@ function BrandCard({ name, slug, description, audience, healthScore, accent }: B
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit brand
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Brand Brain
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/brands/${slug}/settings`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Brand Brain
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="text-[var(--color-danger)]">
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -120,7 +127,7 @@ function BrandCard({ name, slug, description, audience, healthScore, accent }: B
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <p className="mos-muted min-h-[48px] text-sm leading-6">{description}</p>
+        <p className="mos-muted min-h-[48px] text-sm leading-6">{description || "No description yet"}</p>
 
         <div className="mos-panel space-y-3 p-4">
           <div className="flex items-center justify-between gap-3 text-sm">
@@ -130,11 +137,6 @@ function BrandCard({ name, slug, description, audience, healthScore, accent }: B
           <div className="h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
             <div className="h-full rounded-full bg-[var(--brand-accent)]" style={{ width: `${healthScore}%` }} />
           </div>
-        </div>
-
-        <div className="grid gap-3">
-          <MetadataRow label="Audience" value={audience} />
-          <MetadataRow label="Position" value={accent} />
         </div>
 
         <div className="flex items-center justify-between gap-3">
@@ -165,14 +167,5 @@ function SummaryCard({ title, value, detail }: { title: string; value: string; d
         <p className="text-3xl font-semibold">{value}</p>
       </CardContent>
     </Card>
-  );
-}
-
-function MetadataRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="mos-subtle">{label}</span>
-      <span className="truncate text-right text-[var(--color-text-secondary)]">{value}</span>
-    </div>
   );
 }

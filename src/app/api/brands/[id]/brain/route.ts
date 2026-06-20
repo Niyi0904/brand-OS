@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { brandBrainSchema } from "@/lib/validations";
+import { validateCsrf, csrfError } from "@/lib/csrf";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +17,7 @@ export async function GET(
 
     const brand = await prisma.brand.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
       include: {
@@ -38,9 +40,11 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!validateCsrf(req as any)) return csrfError();
+    const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,7 +55,7 @@ export async function PUT(
 
     const brand = await prisma.brand.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: session.user.id,
       },
     });
@@ -62,12 +66,12 @@ export async function PUT(
 
     const brandBrain = await prisma.brandBrain.upsert({
       where: {
-        brandId: params.id,
+        brandId: id,
       },
       update: brandBrainData,
       create: {
         ...brandBrainData,
-        brandId: params.id,
+        brandId: id,
       },
     });
 
