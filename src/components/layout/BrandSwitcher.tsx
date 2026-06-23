@@ -8,10 +8,19 @@ import {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Search, Plus, Check, AlertCircle } from "lucide-react";
+import {
+  ChevronDown,
+  Search,
+  Plus,
+  Check,
+  AlertCircle,
+  Loader2,
+  Clock,
+} from "lucide-react";
 
 import { useBrand } from "@/lib/brand-context-provider";
 import { BrandAvatar } from "@/components/ui/brand-avatar";
+import type { Brand } from "@/lib/brand-context-provider";
 
 function highlightMatch(text: string, query: string) {
   if (!query) return text;
@@ -44,6 +53,13 @@ function getRelativeTime(date: Date | string | null | undefined): string | null 
   return days[d.getDay()];
 }
 
+/** Returns true when the brand was used within the last 7 days. */
+function isRecent(date: Date | string | null | undefined): boolean {
+  if (!date) return false;
+  const d = typeof date === "string" ? new Date(date) : date;
+  return Date.now() - d.getTime() < 7 * 24 * 60 * 60 * 1000;
+}
+
 type BrandSwitcherProps = {
   showName?: boolean;
   align?: "left" | "right";
@@ -56,13 +72,13 @@ export function BrandSwitcher({
   asBottomSheet = false,
 }: BrandSwitcherProps) {
   const router = useRouter();
-  const { currentBrand, brands, setCurrentBrand } = useBrand();
+  const { currentBrand, brands, switchBrand, isSwitching } = useBrand();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [previousBrand, setPreviousBrand] = useState<typeof currentBrand>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [errorVisible, setErrorVisible] = useState(false);
+  const [switchingToId, setSwitchingToId] = useState<string | null>(null);
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -70,7 +86,7 @@ export function BrandSwitcher({
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sort brands by lastActiveAt desc, then alphabetically for never-used
+  // Sort and split brands into recent / all
   const sortedBrands = useMemo(() => {
     return [...brands].sort((a, b) => {
       const aTime = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
@@ -80,51 +96,64 @@ export function BrandSwitcher({
     });
   }, [brands]);
 
-  const filteredBrands = useMemo(() => {
-    if (!searchQuery) return sortedBrands;
-    const q = searchQuery.toLowerCase();
-    return sortedBrands.filter((b) => b.name.toLowerCase().includes(q));
-  }, [sortedBrands, searchQuery]);
+  const { recentBrands, olderBrands } = useMemo(() => {
+    const recent: Brand[] = [];
+    const older: Brand[] = [];
+    let seenRecent = false;
+    for (const b of sortedBrands) {
+      if (isRecent(b.lastActiveAt) && !seenRecent) {
+        recent.push(b);
+      } else {
+        if (recent.length > 0) seenRecent = true;
+        older.push(b);
+      }
+    }
+    // If every brand is recent, treat all as recent
+    if (older.length > 0 && recent.length === 0 && sortedBrands.length > 0) {
+      recent.push(sortedBrands[0]);
+      older.splice(0, 1);
+    }
+    return { recentBrands: recent, olderBrands: older };
+  }, [sortedBrands]);
 
-  const totalItems = filteredBrands.length + 1;
-  const filteredBrandsRef = useRef(filteredBrands);
-  filteredBrandsRef.current = filteredBrands;
+  const filteredRecent = useMemo(() => {
+    if (!searchQuery) return recentBrands;
+    const q = searchQuery.toLowerCase();
+    return recentBrands.filter((b) => b.name.toLowerCase().includes(q));
+  }, [recentBrands, searchQuery]);
+
+  const filteredOlder = useMemo(() => {
+    if (!searchQuery) return olderBrands;
+    const q = searchQuery.toLowerCase();
+    return olderBrands.filter((b) => b.name.toLowerCase().includes(q));
+  }, [olderBrands, searchQuery]);
+
+  const totalItems = filteredRecent.length + filteredOlder.length + (searchQuery === "" ? 1 : 0);
+  const filteredBrandsRef = useRef(filteredRecent);
+  filteredBrandsRef.current = filteredRecent;
 
   const handleSwitch = useCallback(
     async (brandId: string) => {
-      const brand = brands.find((b) => b.id === brandId);
-      if (!brand) return;
-
-      setPreviousBrand(currentBrand);
-      setCurrentBrand(brand);
+      setError(null);
+      setSwitchingToId(brandId);
       setOpen(false);
       setSearchQuery("");
 
       try {
-        const res = await fetch("/api/brands/switch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brandId }),
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to switch brand");
-        }
-
-        router.refresh();
+        await switchBrand(brandId);
       } catch {
-        if (previousBrand) setCurrentBrand(previousBrand);
-        else setCurrentBrand(currentBrand);
         setError("Couldn't switch brands. Try again.");
+      } finally {
+        setSwitchingToId(null);
       }
     },
-    [brands, currentBrand, previousBrand, setCurrentBrand, router]
+    [switchBrand],
   );
 
   const handleAddBrand = useCallback(() => {
     setOpen(false);
     setSearchQuery("");
-    router.push("/brands/new");
+    router.push("/dashboard/brands/new");
   }, [router]);
 
   // Focus trap
@@ -152,9 +181,11 @@ export function BrandSwitcher({
 
       if (e.key === "Enter" && focusedIndex >= 0) {
         e.preventDefault();
-        const currentFiltered = filteredBrandsRef.current;
-        if (focusedIndex < currentFiltered.length) {
-          handleSwitch(currentFiltered[focusedIndex].id);
+        const recent = filteredBrandsRef.current;
+        const older = filteredOlder;
+        const allItems = [...recent, ...older];
+        if (focusedIndex < allItems.length) {
+          handleSwitch(allItems[focusedIndex].id);
         } else {
           handleAddBrand();
         }
@@ -172,7 +203,7 @@ export function BrandSwitcher({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, focusedIndex, totalItems, handleSwitch, handleAddBrand]);
+  }, [open, focusedIndex, totalItems, filteredOlder, handleSwitch, handleAddBrand]);
 
   // Auto-focus search
   useEffect(() => {
@@ -222,6 +253,7 @@ export function BrandSwitcher({
   }, [open]);
 
   const handleTriggerClick = () => {
+    if (isSwitching) return;
     const nextOpen = !open;
     setOpen(nextOpen);
     if (error) {
@@ -241,6 +273,68 @@ export function BrandSwitcher({
 
   if (!currentBrand || brands.length === 0) return null;
 
+  const renderBrandItem = (brand: Brand, idx: number, sectionOffset: number) => {
+    const globalIdx = sectionOffset + idx;
+    const isActive = brand.id === currentBrand.id;
+    const isFocused = focusedIndex === globalIdx;
+    const isSwitchingThis = switchingToId === brand.id;
+
+    return (
+      <button
+        key={brand.id}
+        role="option"
+        aria-selected={isActive}
+        disabled={isSwitching}
+        onClick={() => handleSwitch(brand.id)}
+        onMouseEnter={() => setFocusedIndex(globalIdx)}
+        className={`flex w-full items-center gap-[10px] px-3 py-0 text-left text-sm transition-colors ${
+          isFocused ? "bg-[var(--color-surface-2)]" : "hover:bg-[var(--color-surface-2)]"
+        } ${isActive ? "bg-[var(--color-surface-2)]" : ""} ${
+          isSwitching ? "pointer-events-none opacity-50" : ""
+        }`}
+        style={{
+          minHeight: "44px",
+          borderLeft: isActive ? "2px solid var(--brand-accent)" : "2px solid transparent",
+          outline: isFocused ? "2px solid var(--accent)" : "none",
+          outlineOffset: "-2px",
+        }}
+      >
+        <BrandAvatar brand={brand} size={24} />
+
+        <div className="flex-1 min-w-0">
+          <span
+            className={`block truncate text-[0.9375rem] font-medium ${
+              isActive ? "text-[var(--brand-accent)]" : "text-[var(--color-text-primary)]"
+            }`}
+            style={{ maxWidth: "140px" }}
+          >
+            {highlightMatch(brand.name, searchQuery)}
+          </span>
+          {brand.organization?.name && (
+            <span className="block truncate text-[0.8125rem] text-[var(--color-text-tertiary)]">
+              {brand.organization.name}
+            </span>
+          )}
+        </div>
+
+        <div className="shrink-0 text-right">
+          {isSwitchingThis ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-text-tertiary)]" />
+          ) : isActive ? (
+            <Check
+              className="h-3.5 w-3.5 text-[var(--brand-accent)]"
+              aria-label={`${brand.name} — active`}
+            />
+          ) : (
+            <span className="text-[0.8125rem] text-[var(--color-text-tertiary)] whitespace-nowrap">
+              {getRelativeTime(brand.lastActiveAt)}
+            </span>
+          )}
+        </div>
+      </button>
+    );
+  };
+
   const dropdownContent = (
     <div
       ref={dropdownRef}
@@ -255,7 +349,7 @@ export function BrandSwitcher({
         width: asBottomSheet ? "100%" : align === "right" ? "auto" : "100%",
         minWidth: asBottomSheet ? undefined : "240px",
         maxWidth: asBottomSheet ? undefined : "320px",
-        maxHeight: asBottomSheet ? "60vh" : "320px",
+        maxHeight: asBottomSheet ? "60vh" : "360px",
         overflowY: "auto",
         borderRadius: asBottomSheet ? "12px 12px 0 0" : "12px",
         boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)",
@@ -288,65 +382,48 @@ export function BrandSwitcher({
 
       {/* Brand List */}
       <div id="brand-listbox" className="py-1">
-        {filteredBrands.length === 0 ? (
+        {filteredRecent.length === 0 && filteredOlder.length === 0 ? (
           <div className="flex items-center justify-center py-8">
-            <span className="text-[0.8125rem] text-[var(--color-text-tertiary)]">No brands found</span>
+            <span className="text-[0.8125rem] text-[var(--color-text-tertiary)]">
+              {searchQuery ? "No brands found" : "No brands yet"}
+            </span>
           </div>
         ) : (
-          filteredBrands.map((brand, idx) => {
-            const isActive = brand.id === currentBrand.id;
-            const isFocused = focusedIndex === idx;
-
-            return (
-              <button
-                key={brand.id}
-                role="option"
-                aria-selected={isActive}
-                onClick={() => handleSwitch(brand.id)}
-                onMouseEnter={() => setFocusedIndex(idx)}
-                className={`flex w-full items-center gap-[10px] px-3 py-0 text-left text-sm transition-colors ${
-                  isFocused ? "bg-[var(--color-surface-2)]" : "hover:bg-[var(--color-surface-2)]"
-                } ${isActive ? "bg-[var(--color-surface-2)]" : ""}`}
-                style={{
-                  minHeight: "44px",
-                  borderLeft: isActive ? "2px solid var(--brand-accent)" : "2px solid transparent",
-                  outline: isFocused ? "2px solid var(--accent)" : "none",
-                  outlineOffset: "-2px",
-                }}
-              >
-                <BrandAvatar brand={brand} size={24} />
-
-                <div className="flex-1 min-w-0">
-                  <span
-                    className={`block truncate text-[0.9375rem] font-medium ${
-                      isActive ? "text-[var(--brand-accent)]" : "text-[var(--color-text-primary)]"
-                    }`}
-                    style={{ maxWidth: "140px" }}
-                  >
-                    {highlightMatch(brand.name, searchQuery)}
+          <>
+            {/* Recent section */}
+            {filteredRecent.length > 0 && !searchQuery && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5">
+                  <Clock className="h-3 w-3 text-[var(--color-text-tertiary)]" />
+                  <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                    Recent
                   </span>
-                  {brand.organization?.name && (
-                    <span className="block truncate text-[0.8125rem] text-[var(--color-text-tertiary)]">
-                      {brand.organization.name}
-                    </span>
-                  )}
                 </div>
+                {filteredRecent.map((brand, idx) =>
+                  renderBrandItem(brand, idx, 0),
+                )}
+                {filteredOlder.length > 0 && (
+                  <div className="my-1 border-t border-[var(--color-border)]" />
+                )}
+              </>
+            )}
 
-                <div className="shrink-0 text-right">
-                  {isActive ? (
-                    <Check
-                      className="h-3.5 w-3.5 text-[var(--brand-accent)]"
-                      aria-label={`${brand.name} — active`}
-                    />
-                  ) : (
-                    <span className="text-[0.8125rem] text-[var(--color-text-tertiary)] whitespace-nowrap">
-                      {getRelativeTime(brand.lastActiveAt)}
+            {/* Older section (or all when searching) */}
+            {(filteredOlder.length > 0 || searchQuery) && (
+              <>
+                {searchQuery ? null : (
+                  <div className="flex items-center gap-2 px-3 py-1.5">
+                    <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                      All brands
                     </span>
-                  )}
-                </div>
-              </button>
-            );
-          })
+                  </div>
+                )}
+                {filteredOlder.map((brand, idx) =>
+                  renderBrandItem(brand, idx, filteredRecent.length),
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
 
@@ -357,16 +434,19 @@ export function BrandSwitcher({
           <button
             role="option"
             aria-selected={false}
+            disabled={isSwitching}
             onClick={() => {
               handleAddBrand();
               handleUserInteraction();
             }}
-            onMouseEnter={() => setFocusedIndex(filteredBrands.length)}
+            onMouseEnter={() =>
+              setFocusedIndex(filteredRecent.length + filteredOlder.length)
+            }
             className={`flex w-full items-center gap-[10px] px-3 text-left text-sm transition-colors ${
-              focusedIndex === filteredBrands.length
+              focusedIndex === filteredRecent.length + filteredOlder.length
                 ? "bg-[var(--color-surface-2)] text-[var(--color-text-primary)]"
                 : "hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)] text-[var(--color-text-secondary)]"
-            }`}
+            } ${isSwitching ? "pointer-events-none opacity-50" : ""}`}
             style={{ minHeight: "40px" }}
           >
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-surface-3)]">
@@ -386,9 +466,10 @@ export function BrandSwitcher({
         ref={triggerRef}
         type="button"
         onClick={handleTriggerClick}
+        disabled={isSwitching}
         className={`flex w-full items-center gap-[10px] border-b border-[var(--color-border)] px-3 text-left transition-colors hover:bg-[var(--color-surface-2)] ${
           open ? "bg-[var(--color-surface-2)]" : "bg-transparent"
-        }`}
+        } ${isSwitching ? "pointer-events-none opacity-60" : ""}`}
         style={{
           height: "48px",
           borderRadius: 0,
@@ -408,11 +489,15 @@ export function BrandSwitcher({
             {currentBrand.name}
           </span>
         )}
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[var(--color-text-tertiary)] transition-transform duration-150 ${
-            open ? "rotate-180" : ""
-          }`}
-        />
+        {isSwitching ? (
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--brand-accent)]" />
+        ) : (
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-[var(--color-text-tertiary)] transition-transform duration-150 ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        )}
       </button>
 
       {/* Dropdown */}

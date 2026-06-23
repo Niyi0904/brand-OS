@@ -18,6 +18,7 @@ import {
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerActiveBrandId } from "@/lib/brand-server";
 import { BrandProvider } from "@/lib/brand-context-provider";
 import { BrandProviderInitializer } from "@/components/layout/BrandProviderInitializer";
 import { getUserSubscription } from "@/lib/subscription";
@@ -91,9 +92,12 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     orderBy: { createdAt: "desc" },
   });
 
+  // Read the active brand cookie to pre-select the current workspace
+  const activeBrandId = await getServerActiveBrandId();
+
   return (
     <BrandProvider>
-      <BrandProviderInitializer brands={brands} />
+      <BrandProviderInitializer brands={brands} activeBrandId={activeBrandId} />
       <SubscriptionGuard subscription={subscription}>
         <DashboardShell>
         <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">

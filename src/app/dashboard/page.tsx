@@ -11,42 +11,43 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  Building2,
 } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerActiveBrandId } from "@/lib/brand-server";
 import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-type StatCardProps = {
-  title: string;
-  value: string;
-  change: string;
-  icon: ReactNode;
-};
+async function getDashboardStats(userId: string, brandId: string | null) {
+  // When a brand is active, scope every query to that brand.
+  // When no brand is active, show aggregate counts.
+  const brandFilter = brandId ? { brandId } : { brand: { userId } };
+  const brandWhere = brandId ? { id: brandId, userId } : { userId };
 
-type QuickActionCardProps = {
-  title: string;
-  description: string;
-  icon: ReactNode;
-  href: string;
-  signal: string;
-};
-
-async function getDashboardStats(userId: string) {
-  const [brandCount, campaignCount, conversationCount, brandBrains] = await Promise.all([
+  const [activeBrand, brandCount, campaignCount, conversationCount, brandBrains] = await Promise.all([
+    brandId
+      ? prisma.brand.findUnique({
+          where: { id: brandId },
+          select: { id: true, name: true, slug: true, logo: true, accentColour: true },
+        })
+      : Promise.resolve(null),
     prisma.brand.count({ where: { userId } }),
-    prisma.campaign.count({ where: { brand: { userId } } }),
-    prisma.conversation.count({ where: { userId } }),
+    brandId
+      ? prisma.campaign.count({ where: { brandId } })
+      : prisma.campaign.count({ where: { brand: { userId } } }),
+    brandId
+      ? prisma.conversation.count({ where: { brandId } })
+      : prisma.conversation.count({ where: { userId } }),
     prisma.brand.findMany({
-      where: { userId },
+      where: brandWhere,
       include: { brandBrain: true },
       take: 10,
     }),
   ]);
 
-  // Compute average brand brain completeness
   let avgCompleteness = 0;
   if (brandBrains.length > 0) {
     const totals = brandBrains.map((b) => computeBrandBrainCompleteness(b.brandBrain));
@@ -54,6 +55,7 @@ async function getDashboardStats(userId: string) {
   }
 
   return {
+    activeBrand,
     brandCount,
     campaignCount,
     conversationCount,
@@ -65,10 +67,38 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
 
-  const stats = await getDashboardStats(session.user.id);
+  const activeBrandId = await getServerActiveBrandId();
+  const stats = await getDashboardStats(session.user.id, activeBrandId);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      {/* Active-brand header */}
+      {stats.activeBrand ? (
+        <section className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg"
+            style={{
+              background: stats.activeBrand.accentColour
+                ? `${stats.activeBrand.accentColour}22`
+                : "var(--color-surface-3)",
+            }}
+          >
+            <Building2
+              className="h-5 w-5"
+              style={{
+                color: stats.activeBrand.accentColour ?? "var(--brand-accent)",
+              }}
+            />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+              {stats.activeBrand.name}
+            </h2>
+            <p className="mos-muted text-xs">Active workspace</p>
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="mos-card overflow-hidden">
           <div className="grid gap-6 p-6 lg:grid-cols-[1fr_260px] lg:p-7">
@@ -77,10 +107,14 @@ export default async function DashboardPage() {
                 Marketing command center
               </div>
               <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-4xl">
-                Run every brand with context, clarity, and AI employees that know the brief.
+                {stats.activeBrand
+                  ? `Running ${stats.activeBrand.name} with context, clarity, and AI.`
+                  : "Run every brand with context, clarity, and AI employees that know the brief."}
               </h1>
               <p className="mos-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base">
-                Keep Brand Brain data current, route work to the right specialist, and track the next marketing moves from one focused workspace.
+                {stats.activeBrand
+                  ? `Keep ${stats.activeBrand.name}'s Brand Brain data current, route work to the right specialist, and track the next marketing moves.`
+                  : "Keep Brand Brain data current, route work to the right specialist, and track the next marketing moves from one focused workspace."}
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Button asChild>
@@ -100,7 +134,9 @@ export default async function DashboardPage() {
 
             <div className="mos-panel flex flex-col justify-between p-5">
               <div>
-                <p className="mos-subtle text-xs font-semibold uppercase tracking-[0.18em]">Brand readiness</p>
+                <p className="mos-subtle text-xs font-semibold uppercase tracking-[0.18em]">
+                  {stats.activeBrand ? "Brand readiness" : "Workspace readiness"}
+                </p>
                 <div className="mt-5 flex items-end gap-2">
                   <span className="text-5xl font-semibold">{stats.avgCompleteness}</span>
                   <span className="mos-muted mb-2 text-sm">/100</span>
@@ -228,13 +264,28 @@ function PriorityItem({ icon, title, meta }: { icon: ReactNode; title: string; m
   );
 }
 
-function ReadinessRow({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
+function ReadinessRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
       <span className="mos-muted">{label}</span>
-      <span className={muted ? "mos-warning-pill rounded-full px-2 py-0.5 text-xs" : "mos-success-pill rounded-full px-2 py-0.5 text-xs"}>
+      <span className="mos-success-pill rounded-full px-2 py-0.5 text-xs">
         {value}
       </span>
     </div>
   );
 }
+
+type StatCardProps = {
+  title: string;
+  value: string;
+  change: string;
+  icon: ReactNode;
+};
+
+type QuickActionCardProps = {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  href: string;
+  signal: string;
+};

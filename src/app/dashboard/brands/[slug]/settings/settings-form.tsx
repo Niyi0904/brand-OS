@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useActionState, useTransition } from "react";
 import { Save, Upload, Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -44,11 +43,11 @@ const COMPLETENESS_FIELDS: string[] = [
 export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: SettingsFormProps) {
   const initialState: SettingsActionState = {};
   const [state, formAction] = useActionState(updateBrandBrainAction, initialState);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl);
   const [hasFileSelected, setHasFileSelected] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Track live field values for dynamic progress — init from server data
   const [liveValues, setLiveValues] = useState<Record<string, string | null>>(() => {
@@ -98,19 +97,24 @@ export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: 
     return Math.round((filledFields / totalFields) * 100);
   })();
 
-  // Handle save
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Revalidate after successful save
+  useEffect(() => {
+    if (state?.message && !state.errors) {
+      router.refresh();
+    }
+  }, [state, router]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    const formData = new FormData(e.currentTarget);
-    await formAction(formData);
-    setIsSubmitting(false);
-    router.refresh();
+    const fd = new FormData(e.currentTarget);
+    startTransition(() => {
+      formAction(fd);
+    });
   };
 
   return (
     <div className="space-y-6">
-      <form action={formAction} onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="logo" value={selectedLogo ?? ""} id="logo-input" />
 
@@ -288,8 +292,8 @@ export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: 
 
         {/* Save Button */}
         <div className="flex items-center gap-4 pb-4">
-          <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? (
+          <Button type="submit" size="lg" disabled={isPending}>
+            {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Saving...

@@ -5,22 +5,36 @@ import { useBrand, Brand } from "@/lib/brand-context-provider";
 
 type BrandProviderInitializerProps = {
   brands: Brand[];
+  /** Optional brand ID from the server cookie, passed down from layout. */
+  activeBrandId?: string | null;
 };
 
-export function BrandProviderInitializer({ brands }: BrandProviderInitializerProps) {
+/**
+ * Hydrates the Zustand brand store with brands fetched server-side.
+ *
+ * When `activeBrandId` is provided (read from the cookie server-side)
+ * it is used directly — no client-side cookie parsing needed.
+ * Falls back to localStorage for environments without SSR (edge cases).
+ */
+export function BrandProviderInitializer({ brands, activeBrandId }: BrandProviderInitializerProps) {
   const { initialize } = useBrand();
 
   useEffect(() => {
-    // Read active brand from cookie (set by /api/brands/switch), fall back to localStorage
-    const fromCookie = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("active_brand_id="))
-      ?.split("=")[1] || null;
+    let brandId = activeBrandId ?? null;
 
-    const activeBrandId = fromCookie || localStorage.getItem("current_brand_id");
+    // Fallback: parse cookie client-side when SSR didn't run
+    if (!brandId) {
+      brandId =
+        document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("active_brand_id="))
+          ?.split("=")[1] ||
+        localStorage.getItem("current_brand_id") ||
+        null;
+    }
 
-    initialize(brands, activeBrandId);
-  }, [brands, initialize]);
+    initialize(brands, brandId);
+  }, [brands, initialize, activeBrandId]);
 
   return null;
 }

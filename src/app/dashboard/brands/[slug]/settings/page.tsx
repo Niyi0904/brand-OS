@@ -16,14 +16,7 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
 
   const brand = await prisma.brand.findFirst({
     where: { slug, userId: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      logo: true,
-      accentColour: true,
-      brandBrain: true,
-    },
+    include: { brandBrain: true },
   });
 
   if (!brand) notFound();

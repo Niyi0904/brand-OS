@@ -2,9 +2,14 @@
 
 import type { ReactNode } from "react";
 import { useBrand } from "@/lib/brand-context-provider";
+import { useBrandSwitchEffects } from "@/lib/brand-switch-effects";
+import { BrandSwitchOverlay } from "@/components/layout/BrandSwitchOverlay";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { currentBrand } = useBrand();
+
+  // Fire side-effects whenever the active brand changes
+  useBrandSwitchEffects();
 
   return (
     <div
@@ -17,6 +22,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       } as React.CSSProperties}
     >
       {children}
+
+      {/* Full-screen loading overlay during brand switch */}
+      <BrandSwitchOverlay />
     </div>
   );
 }

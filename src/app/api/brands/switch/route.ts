@@ -24,7 +24,16 @@ export async function POST(req: Request) {
         id: brandId,
         userId: session.user.id,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        accentColour: true,
+        description: true,
+        lastActiveAt: true,
+        organization: { select: { name: true } },
+      },
     });
 
     if (!brand) {
@@ -47,7 +56,7 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
 
-    return NextResponse.json({ success: true, brandId });
+    return NextResponse.json({ success: true, brandId, brand });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to switch brand" },
