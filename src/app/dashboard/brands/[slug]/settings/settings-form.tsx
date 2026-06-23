@@ -18,11 +18,13 @@ import { CompetitorsSection } from "./sections/competitors-section";
 import { SeoKeywordsSection } from "./sections/seo-keywords-section";
 import { FaqsSection } from "./sections/faqs-section";
 import { AdditionalContextSection } from "./sections/additional-context-section";
+import { AppearanceSection } from "./sections/appearance-section";
 
 type SettingsFormProps = {
   slug: string;
   brandName: string;
   logoUrl: string | null;
+  accentColour: string | null;
   brain: Record<string, string | null> | null;
 };
 
@@ -39,7 +41,7 @@ const COMPLETENESS_FIELDS: string[] = [
   "freeformNotes", "contentExamples", "brandStory",
 ];
 
-export function SettingsForm({ slug, brandName, logoUrl, brain }: SettingsFormProps) {
+export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: SettingsFormProps) {
   const initialState: SettingsActionState = {};
   const [state, formAction] = useActionState(updateBrandBrainAction, initialState);
   const router = useRouter();
@@ -82,12 +84,17 @@ export function SettingsForm({ slug, brandName, logoUrl, brain }: SettingsFormPr
   }, []);
 
   // Calculate progress from live values (responds to both saved and unsaved changes)
+  const isFilledValue = (value: string | null | undefined): boolean => {
+    if (!value || value.trim().length === 0) return false;
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.length > 0;
+    } catch {}
+    return true;
+  };
   const progress = (() => {
     const totalFields = COMPLETENESS_FIELDS.length;
-    const filledFields = COMPLETENESS_FIELDS.filter((field) => {
-      const value = liveValues[field];
-      return value !== null && value !== undefined && value.trim().length > 0;
-    }).length;
+    const filledFields = COMPLETENESS_FIELDS.filter((field) => isFilledValue(liveValues[field])).length;
     return Math.round((filledFields / totalFields) * 100);
   })();
 
@@ -217,7 +224,6 @@ export function SettingsForm({ slug, brandName, logoUrl, brain }: SettingsFormPr
             websiteUrl={brain?.websiteUrl ?? ""}
             industry={brain?.industry ?? ""}
             foundedYear={brain?.foundedYear ?? ""}
-            logo={selectedLogo ?? ""}
           />
 
           <MissionValuesSection
@@ -276,6 +282,8 @@ export function SettingsForm({ slug, brandName, logoUrl, brain }: SettingsFormPr
             contentExamples={brain?.contentExamples ?? ""}
             brandStory={brain?.brandStory ?? ""}
           />
+
+          <AppearanceSection slug={slug} accentColour={accentColour ?? ""} />
         </div>
 
         {/* Save Button */}

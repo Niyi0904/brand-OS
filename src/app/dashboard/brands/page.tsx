@@ -4,6 +4,7 @@ import { ArrowUpRight, Building2, CheckCircle2, Edit, MoreVertical, Plus, Trash2
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,18 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-function computeCompleteness(brandBrain: { [key: string]: unknown } | null): number {
-  if (!brandBrain) return 0;
-  const fields = [
-    "mission", "vision", "values", "targetAudience", "customerPersonas",
-    "products", "services", "toneOfVoice", "brandColors", "typography",
-    "competitors", "seoKeywords", "goals", "preferredPlatforms", "writingStyle",
-    "marketingStrategy", "offers", "businessInfo", "locations", "faqs", "brandRules",
-  ];
-  const filled = fields.filter((f) => brandBrain[f] !== null && brandBrain[f] !== "" && brandBrain[f] !== undefined);
-  return Math.round((filled.length / fields.length) * 100);
-}
 
 export default async function BrandsPage() {
   const session = await auth();
@@ -36,7 +25,7 @@ export default async function BrandsPage() {
   });
 
   const avgHealth = brands.length > 0
-    ? Math.round(brands.reduce((sum, b) => sum + computeCompleteness(b.brandBrain), 0) / brands.length)
+    ? Math.round(brands.reduce((sum, b) => sum + computeBrandBrainCompleteness(b.brandBrain), 0) / brands.length)
     : 0;
 
   return (
@@ -74,7 +63,7 @@ export default async function BrandsPage() {
             slug={brand.slug}
             description={brand.description}
             brandBrain={brand.brandBrain}
-            healthScore={computeCompleteness(brand.brandBrain)}
+            healthScore={computeBrandBrainCompleteness(brand.brandBrain)}
           />
         ))}
       </section>

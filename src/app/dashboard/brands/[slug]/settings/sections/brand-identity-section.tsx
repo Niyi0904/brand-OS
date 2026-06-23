@@ -11,7 +11,6 @@ interface BrandIdentitySectionProps {
   websiteUrl: string;
   industry: string;
   foundedYear: string;
-  logo: string;
 }
 
 export function BrandIdentitySection({
@@ -21,7 +20,6 @@ export function BrandIdentitySection({
   websiteUrl,
   industry,
   foundedYear,
-  logo,
 }: BrandIdentitySectionProps) {
   const { saveState, save } = useSectionAutoSave("brand-identity", slug);
 

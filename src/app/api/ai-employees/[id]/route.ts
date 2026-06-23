@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { validateCsrf, csrfError } from "@/lib/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!validateCsrf(req as any)) return csrfError();
     const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {

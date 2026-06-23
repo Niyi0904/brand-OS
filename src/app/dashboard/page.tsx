@@ -15,6 +15,7 @@ import {
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -48,21 +49,7 @@ async function getDashboardStats(userId: string) {
   // Compute average brand brain completeness
   let avgCompleteness = 0;
   if (brandBrains.length > 0) {
-    const totals = brandBrains.map((b) => {
-      if (!b.brandBrain) return 0;
-      const fields = [
-        b.brandBrain.mission, b.brandBrain.vision, b.brandBrain.values,
-        b.brandBrain.targetAudience, b.brandBrain.customerPersonas,
-        b.brandBrain.products, b.brandBrain.services,
-        b.brandBrain.toneOfVoice, b.brandBrain.brandColors, b.brandBrain.typography,
-        b.brandBrain.competitors, b.brandBrain.seoKeywords, b.brandBrain.goals,
-        b.brandBrain.preferredPlatforms, b.brandBrain.writingStyle,
-        b.brandBrain.marketingStrategy, b.brandBrain.offers, b.brandBrain.businessInfo,
-        b.brandBrain.locations, b.brandBrain.faqs, b.brandBrain.brandRules,
-      ];
-      const filled = fields.filter((f) => f !== null && f !== "").length;
-      return Math.round((filled / fields.length) * 100);
-    });
+    const totals = brandBrains.map((b) => computeBrandBrainCompleteness(b.brandBrain));
     avgCompleteness = Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
   }
 

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { ChatShell } from "./components/ChatShell";
 
 interface EmployeeChatPageProps {
@@ -62,28 +63,7 @@ export default async function EmployeeChatPage({
         { organizationId: { not: null } },
       ],
     },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      brandBrain: {
-        select: {
-          id: true,
-          mission: true,
-          vision: true,
-          values: true,
-          tagline: true,
-          industry: true,
-          voiceAdjectives: true,
-          primaryAudience: true,
-          primaryKeywords: true,
-          missionStatement: true,
-          coreValues: true,
-          toneDescription: true,
-          writingStyleNotes: true,
-        },
-      },
-    },
+    include: { brandBrain: true },
   });
 
   if (!brand) {
@@ -123,19 +103,8 @@ export default async function EmployeeChatPage({
     : [];
 
   // Compute brand brain completeness
-  const brain = brand.brandBrain;
-  let filledSections = 0;
-  if (brain) {
-    if (brain.mission || brain.missionStatement) filledSections++;
-    if (brain.vision) filledSections++;
-    if (brain.values || brain.coreValues) filledSections++;
-    if (brain.tagline || brain.industry) filledSections++;
-    if (brain.voiceAdjectives || brain.toneDescription) filledSections++;
-    if (brain.primaryAudience) filledSections++;
-    if (brain.primaryKeywords) filledSections++;
-    if (brain.writingStyleNotes) filledSections++;
-  }
-  const isBrainSparse = filledSections < 3;
+  const completeness = computeBrandBrainCompleteness(brand.brandBrain);
+  const isBrainSparse = completeness < 30;
 
   return (
     <ChatShell

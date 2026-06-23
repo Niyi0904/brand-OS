@@ -17,15 +17,18 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  password            String?
+  onboardingStep      String?   @default("brand")
+  onboardingCompleted Boolean   @default(false)
+  onboardingSkippedCards String[] @default([])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  organizations OrganizationMember[]
-  brands        Brand[]
-  conversations Conversation[]
+  accounts            Account[]
+  sessions            Session[]
+  organizations       OrganizationMember[]
+  brands              Brand[]
+  conversations       Conversation[]
 }
 
 model Account {
@@ -102,9 +105,11 @@ model Brand {
   name        String
   slug        String
   logo        String?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description   String?   @db.Text
+  accentColour  String?   @db.Text
+  lastActiveAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   userId      String
   organizationId String?

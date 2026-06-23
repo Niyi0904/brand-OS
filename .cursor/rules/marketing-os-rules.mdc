@@ -23,9 +23,12 @@ Do not invent architecture. Follow what exists.
 ```
 src/
   app/
-    (auth)/           ← unauthenticated pages (login)
-    (dashboard)/      ← all protected pages live here
+    auth/             ← unauthenticated pages (login, signup)
+    dashboard/        ← all protected pages live here
       layout.tsx      ← SERVER component — fetches brands, auth check
+      brands/
+      ai-employees/
+      employees/
     api/
       auth/[...nextauth]/route.ts
   components/
@@ -185,9 +188,9 @@ Never use `include` with deeply nested relations unless you explicitly need all 
 **M2 — Brand Brain (in progress)**
 
 Files being built:
-- `src/app/(dashboard)/brands/[slug]/settings/page.tsx` — full Brand Brain form
-- `src/app/(dashboard)/brands/[slug]/settings/actions.ts` — update brand Server Action
-- `src/lib/brand-context.ts` — serialiser: `Brand → string` for AI system prompts
+- `src/app/dashboard/brands/[slug]/settings/page.tsx` — full Brand Brain form
+- `src/app/dashboard/brands/[slug]/settings/actions.ts` — update brand Server Action
+- `src/lib/brand-context-serializer.ts` — serialiser: `BrandBrain → string` for AI system prompts
 - `src/app/api/brands/switch/route.ts` — sets active brand cookie
 
 When working in this milestone, every new file must reference the existing Brand model in `prisma/schema.prisma` — do not add fields to the schema without checking the full schema document first.

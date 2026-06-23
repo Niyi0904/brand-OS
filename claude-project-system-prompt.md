@@ -44,17 +44,21 @@ The project scaffold, auth, and brand creation are live. The following exists:
 ```
 src/
   app/
-    (auth)/
-      login/page.tsx
-    (dashboard)/
+    auth/
+      signin/page.tsx
+      signup/page.tsx
+    dashboard/
       layout.tsx              ← server component, fetches brands, renders sidebar
-      dashboard/page.tsx
+      page.tsx
       brands/
         page.tsx
         new/
           page.tsx
           actions.ts          ← Server Action with Zod validation
-          CreateBrandForm.tsx ← "use client" form wired to useActionState
+      ai-employees/
+        page.tsx
+      employees/
+        [slug]/page.tsx
     api/
       auth/[...nextauth]/route.ts
     layout.tsx
@@ -101,7 +105,7 @@ src/
 
 **What's left to build:**
 - Full brand profile form (all Brand Brain fields from the schema)
-- `src/lib/brand-context.ts` — serialises a Brand record into an AI system prompt string
+- `src/lib/brand-context-serializer.ts` — serialises a Brand record into an AI system prompt string
 - Cookie-based active brand persistence (`/api/brands/switch`)
 - Brand settings page at `/brands/[slug]/settings`
 
@@ -111,7 +115,7 @@ src/
 **Key files to create:**
 - `src/lib/ai/provider.ts` — abstracted AI provider (never call OpenAI/Anthropic directly from pages)
 - `src/lib/ai/employees/` — one file per employee type
-- `src/app/(dashboard)/employees/` — chat UI pages
+- `src/app/dashboard/employees/` — chat UI pages
 
 ### Milestones 4–7 — PLANNED
 - M4: Content Planner (calendar, scheduling, approval workflow)
@@ -213,4 +217,4 @@ The complete schema (all 8 domains) was designed upfront. When adding new tables
 | How do I add a sidebar item? | Add to `NAV_ITEMS` in `src/lib/nav.ts` |
 | How do I style with brand colour? | Use `var(--brand-accent)` — it's set per active brand in the dashboard layout |
 | How do I add a new form? | Server Action in `actions.ts` + Zod schema + `useActionState` in the form component |
-| What's the active brand? | Set in `(dashboard)/layout.tsx`, passed as prop to Sidebar and BrandSwitcher |
+| What's the active brand? | Set in `dashboard/layout.tsx`, passed as prop to Sidebar and BrandSwitcher |

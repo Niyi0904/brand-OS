@@ -37,19 +37,16 @@ export const authOptions: NextAuthConfig = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.error("[AUTH DEBUG MISSING CREDENTIALS] Missing email or password");
           throw new Error("Invalid credentials");
         }
 
         const validatedFields = signInSchema.safeParse(credentials);
         if (!validatedFields.success) {
-          console.error("[AUTH DEBUG ZOD VALIDATION] Validation failed:", validatedFields.error.flatten().fieldErrors);
           throw new Error("Invalid credentials");
         }
 
         const email = validatedFields.data.email as string;
         const password = validatedFields.data.password as string;
-        console.error("[AUTH DEBUG ATTEMPT LOGIN] Attempting login for email:", email, "password length:", password.length);
 
         const user = await prisma.user.findUnique({
           where: {
@@ -57,15 +54,11 @@ export const authOptions: NextAuthConfig = {
           },
         });
 
-        console.error("[AUTH DEBUG] User found:", !!user, "has password:", !!user?.password);
-
         if (!user || !user.password) {
-          console.error("[AUTH DEBUG] User not found or no password");
           throw new Error("Invalid credentials");
         }
 
         const passwordMatch = await compare(password, user.password);
-        console.error("[AUTH DEBUG] Password match:", passwordMatch);
         if (!passwordMatch) {
           throw new Error("Invalid credentials");
         }
@@ -86,12 +79,34 @@ export const authOptions: NextAuthConfig = {
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.image = token.picture as string;
+        (session.user as any).onboardingCompleted = token.onboardingCompleted as boolean;
+        (session.user as any).onboardingStep = token.onboardingStep as string;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+      }
+      if (trigger === "update") {
+        if (session?.onboardingCompleted !== undefined) {
+          token.onboardingCompleted = session.onboardingCompleted;
+        }
+        if (session?.onboardingStep !== undefined) {
+          token.onboardingStep = session.onboardingStep;
+        }
+      }
+      if (token.id && (!token.onboardingCompleted || trigger === "signIn")) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { onboardingCompleted: true, onboardingStep: true },
+          });
+          token.onboardingCompleted = dbUser?.onboardingCompleted ?? false;
+          token.onboardingStep = dbUser?.onboardingStep ?? "brand";
+        } catch {
+          token.onboardingCompleted = false;
+        }
       }
       return token;
     },
@@ -99,18 +114,24 @@ export const authOptions: NextAuthConfig = {
   events: {
     async createUser({ user }) {
       // Create a default organization for new users
-      await prisma.organization.create({
-        data: {
-          name: `${user.name}'s Organization`,
-          slug: `${user.name?.toLowerCase().replace(/\s+/g, "-")}-${user.id.slice(0, 8)}`,
-          members: {
-            create: {
-              userId: user.id,
-              role: "OWNER",
+      const displayName = user.name ?? user.email?.split("@")[0] ?? "My";
+      const baseSlug = displayName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+      try {
+        await prisma.organization.create({
+          data: {
+            name: `${displayName}'s Organization`,
+            slug: `${baseSlug}-${user.id.slice(0, 8)}`,
+            members: {
+              create: {
+                userId: user.id,
+                role: "OWNER",
+              },
             },
           },
-        },
-      });
+        });
+      } catch (error) {
+        console.error("Failed to create organization:", error);
+      }
     },
   },
 };

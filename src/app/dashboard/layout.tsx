@@ -22,6 +22,9 @@ import { BrandProvider } from "@/lib/brand-context-provider";
 import { BrandProviderInitializer } from "@/components/layout/BrandProviderInitializer";
 import { getUserSubscription } from "@/lib/subscription";
 import { SubscriptionGuard } from "@/components/layout/SubscriptionGuard";
+import { BrandSwitcher } from "@/components/layout/BrandSwitcher";
+import { DashboardShell } from "@/components/layout/DashboardShell";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -60,12 +63,31 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect("/auth/signin");
   }
 
+  // Onboarding gate: redirect users who haven't created a brand yet
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { onboardingCompleted: true, onboardingStep: true },
+  });
+
+  if (!user?.onboardingCompleted && (!user?.onboardingStep || user.onboardingStep === "brand")) {
+    redirect("/onboarding");
+  }
+
   const subscription = await getUserSubscription(session.user.id);
 
   // Fetch brands for the BrandProvider initializer
   const brands = await prisma.brand.findMany({
     where: { userId: session.user.id },
-    select: { id: true, name: true, slug: true, description: true, logo: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      logo: true,
+      accentColour: true,
+      lastActiveAt: true,
+      organization: { select: { name: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -73,9 +95,13 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     <BrandProvider>
       <BrandProviderInitializer brands={brands} />
       <SubscriptionGuard subscription={subscription}>
-        <div className="mos-app-shell min-h-screen">
+        <DashboardShell>
         <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">
           <div className="flex h-full flex-col p-5">
+            <div className="mb-4">
+              <BrandSwitcher />
+            </div>
+
             <Link href="/dashboard" className="mb-7 flex items-center gap-3 shrink-0">
               <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg">
                 <Sparkles className="h-5 w-5" />
@@ -124,40 +150,11 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         </aside>
 
         <div className="lg:pl-[var(--sidebar-width)]">
-          <header className="mos-topbar sticky top-0 z-20 border-b">
-            <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-              <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-                <div className="mos-icon-tile flex h-9 w-9 items-center justify-center rounded-lg">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-semibold">MarketingOS</span>
-              </Link>
-
-              <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
-                <div className="mos-panel flex h-10 max-w-xl flex-1 items-center gap-3 px-3">
-                  <Search className="h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <span className="mos-subtle text-sm">Search brands, employees, campaigns</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="mos-pill hidden rounded-full px-3 py-1 text-xs font-medium sm:inline-flex">
-                  M2 Brand Brain
-                </span>
-                <Link
-                  href="/dashboard/brands/new"
-                  className="mos-button-primary inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors"
-                >
-                  <Building2 className="h-4 w-4" />
-                  New brand
-                </Link>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader />
 
           <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
-      </div>
+      </DashboardShell>
       </SubscriptionGuard>
     </BrandProvider>
   );

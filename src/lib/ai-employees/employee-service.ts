@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { BrandBrain } from "@prisma/client";
+import type { AIEmployeeCreateInput } from "./default-employees";
 import { AIProviderFactory, AIMessage, AICompletionOptions } from "@/lib/ai";
 import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
 
@@ -21,18 +22,17 @@ export class EmployeeService {
       });
 
       if (!existing) {
-        await prisma.aIEmployee.create({
-          data: {
-            ...employeeData,
-            userId,
-            organizationId,
-            isSystem: true,
-            isCustom: false,
-            name: employeeData.name ?? "",
-            slug: employeeData.slug,
-            icon: employeeData.icon,
-          } as any,
-        });
+        const data: AIEmployeeCreateInput = {
+          ...employeeData,
+          userId,
+          organizationId,
+          isSystem: true,
+          isCustom: false,
+          name: employeeData.name ?? "",
+          slug: employeeData.slug,
+          icon: employeeData.icon,
+        };
+        await prisma.aIEmployee.create({ data });
       }
     }
   }

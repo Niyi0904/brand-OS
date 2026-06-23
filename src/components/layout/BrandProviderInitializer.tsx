@@ -11,11 +11,13 @@ export function BrandProviderInitializer({ brands }: BrandProviderInitializerPro
   const { initialize } = useBrand();
 
   useEffect(() => {
-    // Read active brand cookie
-    const activeBrandId = document.cookie
+    // Read active brand from cookie (set by /api/brands/switch), fall back to localStorage
+    const fromCookie = document.cookie
       .split("; ")
       .find((row) => row.startsWith("active_brand_id="))
       ?.split("=")[1] || null;
+
+    const activeBrandId = fromCookie || localStorage.getItem("current_brand_id");
 
     initialize(brands, activeBrandId);
   }, [brands, initialize]);

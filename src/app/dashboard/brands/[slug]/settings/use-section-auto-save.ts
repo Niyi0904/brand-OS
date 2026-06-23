@@ -53,6 +53,9 @@ export function useSectionAutoSave(sectionId: string, slug: string) {
 
         if (!response.ok) {
           const error = await response.json().catch(() => ({}));
+          if (process.env.NODE_ENV === "development") {
+            console.warn(`Auto-save failed (${response.status}):`, error);
+          }
           if (response.status === 401) {
             window.location.href = `/auth/signin?returnUrl=/dashboard/brands/${slug}/settings`;
             return;
@@ -97,5 +100,10 @@ export function useSectionAutoSave(sectionId: string, slug: string) {
     [save]
   );
 
-  return { saveState, save: debouncedSave, immediateSave: save };
+  const cancelPending = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    pendingDataRef.current = null;
+  }, []);
+
+  return { saveState, save: debouncedSave, immediateSave: save, cancelPending };
 }

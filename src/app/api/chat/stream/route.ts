@@ -45,10 +45,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
 
-    // Get brand for context
-    const brand = await prisma.brand.findUnique({
-      where: { id: brandId },
-      select: { id: true, name: true },
+    // Get brand for context — verify ownership and include brand brain
+    const brand = await prisma.brand.findFirst({
+      where: { id: brandId, userId: session.user.id },
+      select: { id: true, name: true, brandBrain: true },
     });
 
     if (!brand) {
@@ -78,13 +78,13 @@ export async function POST(req: Request) {
       },
     });
 
-    // Serialize Brand Brain context
-    const brandContext = await serializeBrandForPrompt(brandId);
+    // Serialize Brand Brain context from the brand's brain object
+    const brandContext = serializeBrandForPrompt(brand?.brandBrain ?? null);
 
-    // Build system prompt with Brand Brain context
-    const systemPrompt = `${employee.prompt}
-
-${brandContext ? `\n\nBrand Context:\n${brandContext}` : ""}`;
+    // Build system prompt — replace {{BRAND_BRAIN}} placeholder in the employee prompt
+    const systemPrompt = employee.prompt.includes("{{BRAND_BRAIN}}")
+      ? employee.prompt.replace("{{BRAND_BRAIN}}", brandContext)
+      : `${employee.prompt}\n\n${brandContext ? `Brand Context:\n${brandContext}` : ""}`;
 
     // Try to use real AI provider (Groq, OpenAI, etc.)
     let useRealAI = false;

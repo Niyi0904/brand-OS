@@ -37,12 +37,22 @@ export const { auth } = NextAuth({
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.image = token.picture as string;
+        session.user.onboardingCompleted = token.onboardingCompleted ?? false;
+        session.user.onboardingStep = token.onboardingStep ?? "brand";
       }
       return session;
     },
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger, session }: any) {
       if (user) {
         token.id = user.id;
+      }
+      if (trigger === "update") {
+        if (session?.onboardingCompleted !== undefined) {
+          token.onboardingCompleted = session.onboardingCompleted;
+        }
+        if (session?.onboardingStep !== undefined) {
+          token.onboardingStep = session.onboardingStep;
+        }
       }
       return token;
     },

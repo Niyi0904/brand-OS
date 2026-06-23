@@ -5,7 +5,6 @@ export default auth(async (req) => {
   const isLoggedIn = !!req.auth;
   const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
   const isOnAuth = req.nextUrl.pathname.startsWith("/auth");
-  const isOnBilling = req.nextUrl.pathname.startsWith("/dashboard/billing");
   const isApiRoute = req.nextUrl.pathname.startsWith("/api");
 
   if (isOnDashboard && !isLoggedIn) {

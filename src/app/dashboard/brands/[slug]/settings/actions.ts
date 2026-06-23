@@ -81,10 +81,20 @@ export async function updateBrandBrainAction(
     updateData.foundedYear = null;
   }
 
+  // Also update brand name from the form if provided
+  const brandName = formData.get("brandName") as string | null;
+  const accentColour = formData.get("accentColour") as string | null;
+  const brandUpdateData: Record<string, unknown> = {};
+  if (brandName) {
+    brandUpdateData.name = brandName;
+  }
+  brandUpdateData.logo = logo ?? undefined;
+  brandUpdateData.accentColour = accentColour && accentColour.trim() ? accentColour : null;
+
   await prisma.brand.update({
     where: { id: brand.id },
     data: {
-      logo: logo ?? undefined,
+      ...brandUpdateData,
       brandBrain: {
         upsert: {
           where: { brandId: brand.id },
@@ -96,5 +106,6 @@ export async function updateBrandBrainAction(
   });
 
   revalidatePath(`/dashboard/brands/${slug}/settings`);
+  revalidatePath("/dashboard", "layout");
   return { message: "Brand Brain saved successfully" };
 }

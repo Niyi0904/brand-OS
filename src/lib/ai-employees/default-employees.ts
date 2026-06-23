@@ -1,6 +1,8 @@
-import type { AIEmployee } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
-export const DEFAULT_AI_EMPLOYEES: (Partial<AIEmployee> & { slug: string; icon: string })[] = [
+export type AIEmployeeCreateInput = Prisma.AIEmployeeCreateInput & { slug: string; icon: string };
+
+export const DEFAULT_AI_EMPLOYEES: AIEmployeeCreateInput[] = [
   {
     name: "Marketing Director",
     slug: "marketing-director",

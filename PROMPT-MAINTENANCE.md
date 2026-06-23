@@ -31,7 +31,7 @@ In `.cursorrules`, add to the imports section and note what it replaces or why i
 
 ### After making an architectural decision
 In `claude-project-system-prompt.md`, add it to "Established Patterns". Even one sentence is enough.
-Example: *"Brand context serialisation always goes through `src/lib/brand-context.ts`. Never build brand-to-prompt logic inline."*
+Example: *"Brand context serialisation always goes through `src/lib/brand-context-serializer.ts`. Never build brand-to-prompt logic inline."*
 
 ### After a schema migration
 Update the "Full Prisma Schema Reference" section in `claude-project-system-prompt.md` to move the new tables from "not yet migrated" to the active list.
@@ -44,7 +44,7 @@ When M2 is complete, make these specific changes:
 
 **claude-project-system-prompt.md:**
 - [ ] Move M2 to COMPLETE, add its files to folder structure
-- [ ] Add `src/lib/brand-context.ts` to established patterns with a usage note
+- [ ] Add `src/lib/brand-context-serializer.ts` to established patterns with a usage note
 - [ ] Move M3 to IN PROGRESS, list its planned files
 - [ ] Add `brand_employees` and `employee_templates` to active Prisma tables
 

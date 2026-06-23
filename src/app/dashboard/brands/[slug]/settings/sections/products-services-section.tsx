@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
@@ -43,10 +43,6 @@ export function ProductsServicesSection({
     }
     return parsed;
   });
-
-  useEffect(() => {
-    setLocalProducts(parseProducts(productList));
-  }, [productList]);
 
   const handleProductsChange = (rows: RowData[]) => {
     setLocalProducts(rows);

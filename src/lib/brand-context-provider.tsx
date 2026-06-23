@@ -8,6 +8,9 @@ export interface Brand {
   slug: string;
   description?: string | null;
   logo?: string | null;
+  accentColour?: string | null;
+  lastActiveAt?: Date | string | null;
+  organization?: { name: string } | null;
 }
 
 interface BrandContextType {

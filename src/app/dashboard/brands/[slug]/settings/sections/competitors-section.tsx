@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
@@ -44,10 +44,6 @@ export function CompetitorsSection({
     }
     return parsed;
   });
-
-  useEffect(() => {
-    setLocalCompetitors(parseCompetitors(competitorList));
-  }, [competitorList]);
 
   const handleCompetitorsChange = (rows: RowData[]) => {
     setLocalCompetitors(rows);

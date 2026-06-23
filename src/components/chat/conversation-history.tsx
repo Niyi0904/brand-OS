@@ -14,6 +14,7 @@ interface ConversationHistoryProps {
   }>;
   activeConversationId?: string;
   employeeId: string;
+  employeeSlug?: string;
   brandId: string;
 }
 
@@ -54,6 +55,7 @@ export function ConversationHistory({
   conversations,
   activeConversationId,
   employeeId,
+  employeeSlug,
   brandId,
 }: ConversationHistoryProps) {
   const grouped = groupConversationsByDate(conversations);
@@ -92,7 +94,7 @@ export function ConversationHistory({
                       asChild
                     >
                       <a
-                        href={`/dashboard/ai-employees/${employeeId}/chat?brand=${brandId}&conversation=${conv.id}`}
+                        href={`/dashboard/employees/${employeeSlug || employeeId}?brand=${brandId}&conversation=${conv.id}`}
                       >
                         <MessageSquare className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-tertiary)]" />
                         <div className="min-w-0 flex-1">

@@ -105,9 +105,7 @@ type EmployeeCardData = {
 };
 
 function EmployeeCard({ id, slug, name, title, description, strength, workload, isSystem, accentColor }: EmployeeCardData) {
-  const chatHref = slug
-    ? `/dashboard/employees/${slug}`
-    : `/dashboard/ai-employees/${id}/chat`;
+  const chatHref = `/dashboard/employees/${slug || id}`;
 
   const color = accentColor || "var(--brand-accent)";
 

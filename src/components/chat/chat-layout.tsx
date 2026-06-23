@@ -16,6 +16,7 @@ interface ChatLayoutProps {
     title: string;
     accentColor: string | null;
     description: string | null;
+    slug?: string | null;
   };
   brand: {
     id: string;
@@ -70,6 +71,7 @@ export function ChatLayout({
             conversations={conversations}
             activeConversationId={activeConversationId}
             employeeId={employee.id}
+            employeeSlug={employee.slug || undefined}
             brandId={brand.id}
           />
         )}
@@ -98,6 +100,7 @@ export function ChatLayout({
               conversations={conversations}
               activeConversationId={activeConversationId}
               employeeId={employee.id}
+              employeeSlug={employee.slug || undefined}
               brandId={brand.id}
             />
           </aside>

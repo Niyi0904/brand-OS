@@ -16,15 +16,21 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
 
   const brand = await prisma.brand.findFirst({
     where: { slug, userId: session.user.id },
-    include: { brandBrain: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logo: true,
+      accentColour: true,
+      brandBrain: true,
+    },
   });
 
   if (!brand) notFound();
 
   const brain = brand.brandBrain;
   const completeness = computeBrandBrainCompleteness(brain);
-  const promptPreview = serializeBrandForPrompt(brain);
-  const promptPreviewText = typeof promptPreview === "string" ? promptPreview : JSON.stringify(promptPreview, null, 2);
+  const promptPreviewText = serializeBrandForPrompt(brain);
 
   // Convert brain to plain object for the form — ALL M2 fields included
   const brainData: Record<string, string | null> = brain ? {
@@ -97,6 +103,7 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
           brandName={brand.name}
           brain={brainData}
           logoUrl={brand.logo}
+          accentColour={brand.accentColour}
         />
       </section>
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import type { AIEmployeeCreateInput } from "../src/lib/ai-employees/default-employees";
 import { DEFAULT_AI_EMPLOYEES } from "../src/lib/ai-employees/default-employees";
 
 const prisma = new PrismaClient();
@@ -24,16 +25,15 @@ async function main() {
     }
 
     // Create employee
-    await prisma.aIEmployee.create({
-      data: {
-        ...employeeData,
-        name: employeeData.name ?? "",
-        slug: employeeData.slug,
-        icon: employeeData.icon,
-        isSystem: true,
-        isCustom: false,
-      } as any,
-    });
+    const data: AIEmployeeCreateInput = {
+      ...employeeData,
+      name: employeeData.name ?? "",
+      slug: employeeData.slug,
+      icon: employeeData.icon,
+      isSystem: true,
+      isCustom: false,
+    };
+    await prisma.aIEmployee.create({ data });
 
     console.log(`  ✓ Created ${name}`);
   }

@@ -305,7 +305,7 @@ When a user interacts with any AI employee, the Brand Brain data is serialised i
 - **What they're trying to achieve** (goals, marketing strategy)
 - **Where they operate** (locations, platforms)
 
-The Brand Brain form (Milestone 2) is at `src/app/(dashboard)/brands/[slug]/settings/page.tsx` and the serialiser lives in `src/lib/brand-context.ts`.
+The Brand Brain form (Milestone 2) is at `src/app/(dashboard)/brands/[slug]/settings/page.tsx` and the serialiser lives in `src/lib/brand-context-serializer.ts`.
 
 ---
 

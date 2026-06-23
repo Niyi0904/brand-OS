@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { RepeatingRow, type RowData } from "@/components/ui/repeating-row";
@@ -35,10 +35,6 @@ export function FaqsSection({ slug, faqList }: FaqsSectionProps) {
     }
     return parsed;
   });
-
-  useEffect(() => {
-    setLocalFaqs(parseFaqs(faqList));
-  }, [faqList]);
 
   const handleFaqsChange = (rows: RowData[]) => {
     setLocalFaqs(rows);

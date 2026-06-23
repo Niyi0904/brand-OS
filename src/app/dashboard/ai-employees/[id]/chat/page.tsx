@@ -25,6 +25,7 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
       title: true,
       accentColor: true,
       description: true,
+      slug: true,
     },
   });
 

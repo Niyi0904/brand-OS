@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { validateCsrf, csrfError } from "@/lib/csrf";
 
 export async function POST(req: Request) {
   try {
+    if (!validateCsrf(req as any)) return csrfError();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,10 +31,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Brand not found" }, { status: 404 });
     }
 
-    // Set the active brand cookie
+    // Update lastActiveAt so server-side sorting reflects the active brand
+    await prisma.brand.update({
+      where: { id: brandId },
+      data: { lastActiveAt: new Date() },
+    });
+
+    // Set the active brand cookie (non-httpOnly so JS can read it for initialisation)
     const cookieStore = await cookies();
     cookieStore.set("active_brand_id", brandId, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
