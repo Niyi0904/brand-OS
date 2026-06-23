@@ -25,12 +25,6 @@ export function BrandIdentitySection({
 }: BrandIdentitySectionProps) {
   const { saveState, save } = useSectionAutoSave("brand-identity", slug);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    save(formData);
-  };
-
   return (
     <SectionWrapper
       title="Brand identity"
@@ -43,7 +37,7 @@ export function BrandIdentitySection({
           : "empty"
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-5">
         <div className="space-y-2">
           <label htmlFor="brandName" className="mos-label text-sm font-medium">
             Brand name <span className="text-[var(--color-danger)]">*</span>
@@ -153,7 +147,7 @@ export function BrandIdentitySection({
             />
           </div>
         </div>
-      </form>
+      </div>
     </SectionWrapper>
   );
 }

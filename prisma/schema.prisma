@@ -205,7 +205,9 @@ model BrandBrain {
 model AIEmployee {
   id          String   @id @default(cuid())
   name        String
+  slug        String?  @unique
   title       String
+  icon        String?
   description String?  @db.Text
   purpose     String?  @db.Text
   responsibilities String? @db.Text

@@ -1,19 +1,9 @@
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { computeBrandBrainCompleteness, computeSectionCompletionStates } from "@/lib/brand-utils";
+import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
-import { SavedIndicator } from "@/components/ui/saved-indicator";
-import { SectionSkeleton } from "@/components/ui/skeleton-shimmer";
-import { BrandIdentitySection } from "./sections/brand-identity-section";
-import { MissionValuesSection } from "./sections/mission-values-section";
-import { VoiceToneSection } from "./sections/voice-tone-section";
-import { TargetAudienceSection } from "./sections/target-audience-section";
-import { ProductsServicesSection } from "./sections/products-services-section";
-import { CompetitorsSection } from "./sections/competitors-section";
-import { SeoKeywordsSection } from "./sections/seo-keywords-section";
-import { FaqsSection } from "./sections/faqs-section";
-import { AdditionalContextSection } from "./sections/additional-context-section";
+import { SettingsForm } from "./settings-form";
 
 type SettingsPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,14 +23,53 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
 
   const brain = brand.brandBrain;
   const completeness = computeBrandBrainCompleteness(brain);
-  const sectionStates = computeSectionCompletionStates(brain);
   const promptPreview = serializeBrandForPrompt(brain);
   const promptPreviewText = typeof promptPreview === "string" ? promptPreview : JSON.stringify(promptPreview, null, 2);
 
-  const stateMap = Object.fromEntries(sectionStates.map((s) => [s.sectionId, s.state]));
+  // Convert brain to plain object for the form — ALL M2 fields included
+  const brainData: Record<string, string | null> = brain ? {
+    // Section 1: Brand identity
+    tagline: brain.tagline || "",
+    websiteUrl: brain.websiteUrl || "",
+    industry: brain.industry || "",
+    foundedYear: brain.foundedYear ? String(brain.foundedYear) : "",
+    // Section 2: Mission & values
+    missionStatement: brain.missionStatement || "",
+    coreValues: brain.coreValues || "",
+    brandPromise: brain.brandPromise || "",
+    // Section 3: Voice & tone
+    voiceAdjectives: brain.voiceAdjectives || "",
+    toneDescription: brain.toneDescription || "",
+    writingStyleNotes: brain.writingStyleNotes || "",
+    thingsToAvoid: brain.thingsToAvoid || "",
+    // Section 4: Target audience
+    primaryAudience: brain.primaryAudience || "",
+    audienceDemographics: brain.audienceDemographics || "",
+    audiencePainPoints: brain.audiencePainPoints || "",
+    audienceVocabulary: brain.audienceVocabulary || "",
+    // Section 5: Products & services
+    productList: brain.productList || "",
+    pricingTier: brain.pricingTier || "",
+    keyDifferentiators: brain.keyDifferentiators || "",
+    // Section 6: Competitors
+    competitorList: brain.competitorList || "",
+    competitiveAdvantages: brain.competitiveAdvantages || "",
+    thingsNeverDo: brain.thingsNeverDo || "",
+    // Section 7: SEO & keywords
+    primaryKeywords: brain.primaryKeywords || "",
+    secondaryKeywords: brain.secondaryKeywords || "",
+    topicsToOwn: brain.topicsToOwn || "",
+    topicsToAvoid: brain.topicsToAvoid || "",
+    // Section 8: FAQs
+    faqList: brain.faqList || "",
+    // Section 9: Additional context
+    freeformNotes: brain.freeformNotes || "",
+    contentExamples: brain.contentExamples || "",
+    brandStory: brain.brandStory || "",
+  } : {};
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-6 xl:grid-cols-[1fr_320px]">
+    <div className="mx-auto w-full max-w-7xl">
       <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
@@ -61,83 +90,17 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <SavedIndicator state="idle" />
-            <button
-              type="button"
-              className="mos-button-ghost inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium"
-            >
-              Preview context
-            </button>
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium text-[var(--color-text-tertiary)]"
-            >
-              Import from doc
-              <span className="rounded-full bg-[var(--color-surface-3)] px-2 py-0.5 text-[10px] font-medium">Coming soon</span>
-            </button>
-          </div>
         </div>
 
-        <BrandIdentitySection
+        <SettingsForm
           slug={slug}
           brandName={brand.name}
-          tagline={brain?.tagline ?? ""}
-          websiteUrl={brain?.websiteUrl ?? ""}
-          industry={brain?.industry ?? ""}
-          foundedYear={brain?.foundedYear?.toString() ?? ""}
-          logo={brand.logo ?? ""}
-        />
-        <MissionValuesSection
-          slug={slug}
-          missionStatement={brain?.missionStatement ?? ""}
-          coreValues={brain?.coreValues ?? ""}
-          brandPromise={brain?.brandPromise ?? ""}
-        />
-        <VoiceToneSection
-          slug={slug}
-          voiceAdjectives={brain?.voiceAdjectives ?? ""}
-          toneDescription={brain?.toneDescription ?? ""}
-          writingStyleNotes={brain?.writingStyleNotes ?? ""}
-          thingsToAvoid={brain?.thingsToAvoid ?? ""}
-        />
-        <TargetAudienceSection
-          slug={slug}
-          primaryAudience={brain?.primaryAudience ?? ""}
-          audienceDemographics={brain?.audienceDemographics ?? ""}
-          audiencePainPoints={brain?.audiencePainPoints ?? ""}
-          audienceVocabulary={brain?.audienceVocabulary ?? ""}
-        />
-        <ProductsServicesSection
-          slug={slug}
-          productList={brain?.productList ?? ""}
-          pricingTier={brain?.pricingTier ?? ""}
-          keyDifferentiators={brain?.keyDifferentiators ?? ""}
-        />
-        <CompetitorsSection
-          slug={slug}
-          competitorList={brain?.competitorList ?? ""}
-          competitiveAdvantages={brain?.competitiveAdvantages ?? ""}
-          thingsNeverDo={brain?.thingsNeverDo ?? ""}
-        />
-        <SeoKeywordsSection
-          slug={slug}
-          primaryKeywords={brain?.primaryKeywords ?? ""}
-          secondaryKeywords={brain?.secondaryKeywords ?? ""}
-          topicsToOwn={brain?.topicsToOwn ?? ""}
-          topicsToAvoid={brain?.topicsToAvoid ?? ""}
-        />
-        <FaqsSection slug={slug} faqList={brain?.faqList ?? ""} />
-        <AdditionalContextSection
-          slug={slug}
-          freeformNotes={brain?.freeformNotes ?? ""}
-          contentExamples={brain?.contentExamples ?? ""}
-          brandStory={brain?.brandStory ?? ""}
+          brain={brainData}
+          logoUrl={brand.logo}
         />
       </section>
 
-      <aside className="space-y-6">
+      <aside className="mt-6 space-y-6">
         <div className="mos-card p-5">
           <div className="mb-2 flex items-end gap-2">
             <span className="text-5xl font-semibold text-[var(--color-text-primary)]">{completeness}</span>
@@ -158,28 +121,8 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
             {promptPreviewText || "No brand context yet."}
           </pre>
         </div>
-
-        <div className="mos-card p-5">
-          <h3 className="mb-4 text-sm font-medium text-[var(--color-text-primary)]">Review checklist</h3>
-          <div className="space-y-3">
-            <ChecklistItem label="Current offer is accurate" checked={!!brain?.offers} />
-            <ChecklistItem label="Audience objections are captured" checked={!!brain?.customerPersonas} />
-            <ChecklistItem label="Voice examples are up to date" checked={!!brain?.toneOfVoice} />
-            <ChecklistItem label="Restricted claims are listed" checked={!!brain?.brandRules} />
-          </div>
-        </div>
       </aside>
     </div>
   );
 }
 
-function ChecklistItem({ label, checked }: { label: string; checked: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className={`inline-flex h-4 w-4 items-center justify-center ${checked ? "text-[var(--color-green)]" : "text-[var(--color-text-tertiary)]"}`}>
-        {checked ? "✓" : "○"}
-      </span>
-      <span className={`text-sm ${checked ? "mos-muted" : "mos-subtle"}`}>{label}</span>
-    </div>
-  );
-}

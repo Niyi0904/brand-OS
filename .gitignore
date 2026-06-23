@@ -50,3 +50,5 @@ prisma/migrations
 *.swp
 *.swo
 *~
+
+.kilo

@@ -18,29 +18,68 @@ export const brandSchema = z.object({
   logo: z.string().optional(),
 });
 
-// Legacy flat Brand Brain schema (kept for backward compatibility)
+// Combined Brand Brain schema — includes both legacy M1 fields and M2 spec fields
 export const brandBrainSchema = z.object({
-  mission: z.string().optional(),
-  vision: z.string().optional(),
-  values: z.string().optional(),
-  targetAudience: z.string().optional(),
-  customerPersonas: z.string().optional(),
-  products: z.string().optional(),
-  services: z.string().optional(),
-  toneOfVoice: z.string().optional(),
-  brandColors: z.string().optional(),
-  typography: z.string().optional(),
-  competitors: z.string().optional(),
-  seoKeywords: z.string().optional(),
-  goals: z.string().optional(),
-  preferredPlatforms: z.string().optional(),
-  writingStyle: z.string().optional(),
-  marketingStrategy: z.string().optional(),
-  offers: z.string().optional(),
-  businessInfo: z.string().optional(),
-  locations: z.string().optional(),
-  faqs: z.string().optional(),
-  brandRules: z.string().optional(),
+  // Legacy M1 fields
+  mission: z.string().optional().default(""),
+  vision: z.string().optional().default(""),
+  values: z.string().optional().default(""),
+  targetAudience: z.string().optional().default(""),
+  customerPersonas: z.string().optional().default(""),
+  products: z.string().optional().default(""),
+  services: z.string().optional().default(""),
+  toneOfVoice: z.string().optional().default(""),
+  brandColors: z.string().optional().default(""),
+  typography: z.string().optional().default(""),
+  competitors: z.string().optional().default(""),
+  seoKeywords: z.string().optional().default(""),
+  goals: z.string().optional().default(""),
+  preferredPlatforms: z.string().optional().default(""),
+  writingStyle: z.string().optional().default(""),
+  marketingStrategy: z.string().optional().default(""),
+  offers: z.string().optional().default(""),
+  businessInfo: z.string().optional().default(""),
+  locations: z.string().optional().default(""),
+  faqs: z.string().optional().default(""),
+  brandRules: z.string().optional().default(""),
+  // M2 Section 1: Brand identity
+  tagline: z.string().optional().default(""),
+  websiteUrl: z.string().optional().default(""),
+  industry: z.string().optional().default(""),
+  foundedYear: z.string().optional().default(""),
+  // M2 Section 2: Mission & values
+  missionStatement: z.string().optional().default(""),
+  coreValues: z.string().optional().default(""),
+  brandPromise: z.string().optional().default(""),
+  // M2 Section 3: Voice & tone
+  voiceAdjectives: z.string().optional().default(""),
+  toneDescription: z.string().optional().default(""),
+  writingStyleNotes: z.string().optional().default(""),
+  thingsToAvoid: z.string().optional().default(""),
+  // M2 Section 4: Target audience
+  primaryAudience: z.string().optional().default(""),
+  audienceDemographics: z.string().optional().default(""),
+  audiencePainPoints: z.string().optional().default(""),
+  audienceVocabulary: z.string().optional().default(""),
+  // M2 Section 5: Products & services
+  productList: z.string().optional().default(""),
+  pricingTier: z.string().optional().default(""),
+  keyDifferentiators: z.string().optional().default(""),
+  // M2 Section 6: Competitors
+  competitorList: z.string().optional().default(""),
+  competitiveAdvantages: z.string().optional().default(""),
+  thingsNeverDo: z.string().optional().default(""),
+  // M2 Section 7: SEO & keywords
+  primaryKeywords: z.string().optional().default(""),
+  secondaryKeywords: z.string().optional().default(""),
+  topicsToOwn: z.string().optional().default(""),
+  topicsToAvoid: z.string().optional().default(""),
+  // M2 Section 8: FAQs
+  faqList: z.string().optional().default(""),
+  // M2 Section 9: Additional context
+  freeformNotes: z.string().optional().default(""),
+  contentExamples: z.string().optional().default(""),
+  brandStory: z.string().optional().default(""),
 });
 
 // M2 — 9 Section Schemas for Brand Brain
@@ -121,7 +160,7 @@ export const campaignSchema = z.object({
   status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"]),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  kpis: z.record(z.any()).optional(),
+  kpis: z.record(z.string(), z.any()).optional(),
 });
 
 // Content validations
@@ -133,7 +172,7 @@ export const contentItemSchema = z.object({
   status: z.enum(["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"]),
   scheduledFor: z.date().optional(),
   campaignId: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 // AI Employee validations

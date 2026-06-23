@@ -10,7 +10,7 @@ interface FieldConfig {
   type?: "text" | "textarea";
 }
 
-interface RowData {
+export interface RowData {
   id: string;
   [key: string]: string;
 }

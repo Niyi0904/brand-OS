@@ -128,6 +128,8 @@ export function SettingsContainer({ user, organization, members, subscription }:
   // Profile update state
   const [profileState, profileAction, profilePending] = useActionState(updateProfileAction, {});
   const [avatarUrl, setAvatarUrl] = useState(user.image || "");
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Password change state
   const [passwordState, passwordAction, passwordPending] = useActionState(changePasswordAction, {});
@@ -269,10 +271,18 @@ export function SettingsContainer({ user, organization, members, subscription }:
                                   onClientUploadComplete={(res) => {
                                     if (res?.[0]?.url) {
                                       setAvatarUrl(res[0].url);
+                                      document.getElementById("avatar-input")?.setAttribute("value", res[0].url);
+                                      setAvatarUploadError(null);
+                                      setAvatarUploading(false);
                                     }
                                   }}
                                   onUploadError={(error: Error) => {
-                                    console.error("Upload failed:", error.message);
+                                    setAvatarUploadError(error.message || "Upload failed");
+                                    setAvatarUploading(false);
+                                  }}
+                                  onUploadBegin={() => {
+                                    setAvatarUploading(true);
+                                    setAvatarUploadError(null);
                                   }}
                                 />
                               </div>
@@ -282,9 +292,19 @@ export function SettingsContainer({ user, organization, members, subscription }:
                       </div>
                     </div>
 
-                    <input type="hidden" name="image" value={avatarUrl} />
+<input type="hidden" name="image" value={avatarUrl} id="avatar-input" />
+                     {avatarUploadError && (
+                       <div className="lg:col-span-2 rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                         Upload failed: {avatarUploadError}. Please ensure UploadThing credentials are configured.
+                       </div>
+                     )}
+                     {avatarUploading && (
+                       <div className="lg:col-span-2 rounded-md bg-[var(--color-surface-2)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+                         Uploading image...
+                       </div>
+                     )}
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="name">Display Name</Label>
                         <Input 

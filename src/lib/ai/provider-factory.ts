@@ -7,6 +7,7 @@ import { OpenAIProvider } from "./providers/openai";
 import { AnthropicProvider } from "./providers/anthropic";
 import { GeminiProvider } from "./providers/gemini";
 import { OpenRouterProvider } from "./providers/openrouter";
+import { GroqProvider } from "./providers/groq";
 
 export class AIProviderFactory {
   private static defaultProvider: AIProvider = "openai";
@@ -38,6 +39,8 @@ export class AIProviderFactory {
         return new GeminiProvider(config);
       case "openrouter":
         return new OpenRouterProvider(config);
+      case "groq":
+        return new GroqProvider(config);
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
@@ -66,6 +69,11 @@ export class AIProviderFactory {
           baseURL: "https://openrouter.ai/api/v1",
           model: process.env.OPENROUTER_MODEL || "anthropic/claude-3.5-sonnet",
         };
+      case "groq":
+        return {
+          apiKey: process.env.GROQ_API_KEY || "",
+          model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        };
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
@@ -81,7 +89,7 @@ export class AIProviderFactory {
   }
 
   static getAvailableProviders(): AIProvider[] {
-    const providers: AIProvider[] = ["openai", "anthropic", "gemini", "openrouter"];
+    const providers: AIProvider[] = ["openai", "anthropic", "gemini", "openrouter", "groq"];
     return providers.filter((p) => this.validateProvider(p));
   }
 }

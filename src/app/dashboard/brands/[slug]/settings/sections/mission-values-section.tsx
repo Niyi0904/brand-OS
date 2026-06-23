@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
@@ -20,21 +21,34 @@ export function MissionValuesSection({
 }: MissionValuesSectionProps) {
   const { save } = useSectionAutoSave("mission-values", slug);
 
-  const values = (() => {
+  // Local state for tags so UI updates immediately (not waiting for API)
+  const [localValues, setLocalValues] = useState<string[]>(() => {
+    try { return JSON.parse(coreValues || "[]"); } catch { return []; }
+  });
+
+  // Sync from props when API save completes
+  useEffect(() => {
     try {
-      return JSON.parse(coreValues || "[]");
-    } catch {
-      return [];
-    }
-  })();
+      const parsed = JSON.parse(coreValues || "[]");
+      setLocalValues(parsed);
+    } catch { /* ignore */ }
+  }, [coreValues]);
+
+  const handleValueTagsChange = (tags: string[]) => {
+    setLocalValues(tags); // update UI immediately
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("coreValues", JSON.stringify(tags));
+    save(fd); // fire save in background
+  };
 
   return (
     <SectionWrapper
       title="Mission & values"
       subtext="What the brand stands for. The AI uses this to stay on-purpose in every piece of content."
       completionState={
-        missionStatement || values.length > 0 || brandPromise
-          ? missionStatement && (values.length > 0 || brandPromise)
+        missionStatement || localValues.length > 0 || brandPromise
+          ? missionStatement && (localValues.length > 0 || brandPromise)
             ? "complete"
             : "partial"
           : "empty"
@@ -49,13 +63,13 @@ export function MissionValuesSection({
             id="missionStatement"
             name="missionStatement"
             defaultValue={missionStatement}
-            placeholder="e.g. We help small businesses compete with bigger ones by giving them better tools."
             onBlur={(e) => {
               const fd = new FormData();
               fd.set("slug", slug);
               fd.set("missionStatement", e.target.value);
               save(fd);
             }}
+            placeholder="e.g. We help small businesses compete with bigger ones by giving them better tools."
           />
         </div>
 
@@ -64,21 +78,10 @@ export function MissionValuesSection({
             Core values
           </label>
           <TagInput
-            tags={values}
-            onChange={(tags) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("coreValues", JSON.stringify(tags));
-              save(fd);
-            }}
+            tags={localValues}
+            onChange={handleValueTagsChange}
             maxTags={5}
             placeholder="e.g. Transparency, Customer-first, Innovation"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("coreValues", JSON.stringify(values));
-              save(fd);
-            }}
           />
         </div>
 

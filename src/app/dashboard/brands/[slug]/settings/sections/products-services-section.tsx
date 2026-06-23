@@ -1,15 +1,29 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
-import { RepeatingRow } from "@/components/ui/repeating-row";
+import { RepeatingRow, type RowData } from "@/components/ui/repeating-row";
 
 interface ProductsServicesSectionProps {
   slug: string;
   productList: string;
   pricingTier: string;
   keyDifferentiators: string;
+}
+
+function parseProducts(raw: string): RowData[] {
+  try {
+    const arr = JSON.parse(raw || "[]");
+    return arr.map((p: any, i: number) => ({
+      id: `product-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: typeof p === "string" ? p : p.name || "",
+      oneLiner: typeof p === "string" ? "" : p.oneLiner || "",
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export function ProductsServicesSection({
@@ -20,33 +34,35 @@ export function ProductsServicesSection({
 }: ProductsServicesSectionProps) {
   const { save } = useSectionAutoSave("products-services", slug);
 
-  const products = (() => {
-    try {
-      return JSON.parse(productList || "[]");
-    } catch {
-      return [];
+  // Local state so "Add another" works immediately
+  // ALWAYS show at least one empty row so input fields are visible
+  const [localProducts, setLocalProducts] = useState<RowData[]>(() => {
+    const parsed = parseProducts(productList);
+    if (parsed.length === 0) {
+      return [{ id: crypto.randomUUID(), name: "", oneLiner: "" }];
     }
-  })();
+    return parsed;
+  });
 
-  interface ProductRow {
-    id: string;
-    name: string;
-    oneLiner: string;
-    [key: string]: string;
-  }
-  const normalizedProducts = products.map((p: any, i: number) => ({
-    id: `product-${i}-${Date.now()}`,
-    name: typeof p === "string" ? p : p.name || "",
-    oneLiner: typeof p === "string" ? "" : p.oneLiner || "",
-  }));
+  useEffect(() => {
+    setLocalProducts(parseProducts(productList));
+  }, [productList]);
+
+  const handleProductsChange = (rows: RowData[]) => {
+    setLocalProducts(rows);
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("productList", JSON.stringify(rows.map((r) => ({ name: r.name, oneLiner: r.oneLiner }))));
+    save(fd);
+  };
 
   return (
     <SectionWrapper
       title="Products & services"
       subtext="What the brand sells. The AI uses this when writing about specific offerings."
       completionState={
-        normalizedProducts.length > 0 || pricingTier || keyDifferentiators
-          ? normalizedProducts.length > 0 && (pricingTier || keyDifferentiators)
+        localProducts.length > 0 || pricingTier || keyDifferentiators
+          ? localProducts.length > 0 && (pricingTier || keyDifferentiators)
             ? "complete"
             : "partial"
           : "empty"
@@ -56,25 +72,14 @@ export function ProductsServicesSection({
         <div className="space-y-2">
           <label className="mos-label text-sm font-medium">Products / services</label>
           <RepeatingRow
-            rows={normalizedProducts}
-            onChange={(rows) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("productList", JSON.stringify(rows.map((r: any) => ({ name: r.name, oneLiner: r.oneLiner }))));
-              save(fd);
-            }}
+            rows={localProducts}
+            onChange={handleProductsChange}
             maxRows={10}
             fields={[
               { id: "name", label: "Name", placeholder: "Product name" },
               { id: "oneLiner", label: "One-liner", placeholder: "Brief description", type: "textarea" },
             ]}
             itemLabel="product"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("productList", JSON.stringify(normalizedProducts.map((r: any) => ({ name: r.name, oneLiner: r.oneLiner }))));
-              save(fd);
-            }}
           />
         </div>
 

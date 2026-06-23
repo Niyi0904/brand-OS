@@ -127,29 +127,28 @@ export async function POST(
     const fieldMap = sectionFieldMap[sectionId];
     const updateData: Record<string, unknown> = {};
 
-    for (const [formField, dbField] of Object.entries(fieldMap)) {
-      if (formField === "brandName") {
-        updateData.name = parsed.data[formField as keyof typeof parsed.data];
-      } else if (formField === "foundedYear") {
-        const val = parsed.data[formField as keyof typeof parsed.data];
-        updateData[dbField] = val ? parseInt(val as string) : null;
-      } else {
-        const val = parsed.data[formField as keyof typeof parsed.data];
-        updateData[dbField] = val || null;
+    if (parsed.success) {
+      const data = parsed.data as Record<string, unknown>;
+      for (const [formField, dbField] of Object.entries(fieldMap)) {
+        if (formField === "brandName") {
+          updateData.name = data[formField];
+        } else if (formField === "foundedYear") {
+          const val = data[formField];
+          updateData[dbField] = val ? parseInt(val as string) : null;
+        } else {
+          updateData[dbField] = data[formField] || null;
+        }
       }
-    }
 
-    await prisma.brand.upsert({
-      where: { id: brand.id },
-      create: {
-        id: brand.id,
-        userId: session.user.id,
-        name: brand.id,
-        slug,
-        ...updateData,
-      },
-      update: updateData,
-    });
+      await prisma.brandBrain.upsert({
+        where: { brandId: brand.id },
+        create: {
+          brandId: brand.id,
+          ...updateData,
+        },
+        update: updateData,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
+import { AIProviderFactory } from "@/lib/ai/provider-factory";
 
 export const dynamic = "force-dynamic";
 
@@ -13,20 +14,32 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { message, conversationId, employeeId, brandId } = body;
+    const { message, conversationId, employeeId, employeeSlug, brandId } = body;
 
-    if (!message || !employeeId || !brandId) {
+    if (!message || !brandId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Get employee
-    const employee = await prisma.aIEmployee.findUnique({
-      where: { id: employeeId },
-      select: { id: true, name: true, title: true, prompt: true, accentColor: true },
-    });
+    if (!employeeId && !employeeSlug) {
+      return NextResponse.json(
+        { error: "employeeId or employeeSlug required" },
+        { status: 400 }
+      );
+    }
+
+    // Get employee by slug or id
+    const employee = employeeId
+      ? await prisma.aIEmployee.findUnique({
+          where: { id: employeeId },
+          select: { id: true, name: true, title: true, prompt: true, accentColor: true, slug: true },
+        })
+      : await prisma.aIEmployee.findUnique({
+          where: { slug: employeeSlug },
+          select: { id: true, name: true, title: true, prompt: true, accentColor: true, slug: true },
+        });
 
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
@@ -48,7 +61,7 @@ export async function POST(req: Request) {
       const conversation = await prisma.conversation.create({
         data: {
           userId: session.user.id,
-          employeeId,
+          employeeId: employee.id,
           brandId,
           title: message.slice(0, 50),
         },
@@ -73,9 +86,82 @@ export async function POST(req: Request) {
 
 ${brandContext ? `\n\nBrand Context:\n${brandContext}` : ""}`;
 
-    // For M3, return a mock streaming response
-    // In production, this would call the AI provider
-    const mockResponse = `I'm ${employee.name}, your ${employee.title || "AI assistant"}. I've received your message about "${message.slice(0, 30)}..." and I'm ready to help you with ${brand.name}.\n\nThis is a placeholder response. In production, I would:\n1. Analyze your Brand Brain context\n2. Provide tailored recommendations\n3. Stream the response token-by-token`;
+    // Try to use real AI provider (Groq, OpenAI, etc.)
+    let useRealAI = false;
+    let provider = null;
+    try {
+      provider = AIProviderFactory.getProvider();
+      useRealAI = provider.validateConfig();
+    } catch {
+      useRealAI = false;
+    }
+
+    const encoder = new TextEncoder();
+    let assistantContent = "";
+    let assistantMessageId = "";
+
+    if (useRealAI && provider) {
+      // Real AI streaming
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            const messages = [
+              { role: "system" as const, content: systemPrompt },
+              { role: "user" as const, content: message },
+            ];
+
+            // Save placeholder assistant message
+            const assistantMessage = await prisma.message.create({
+              data: {
+                conversationId: activeConversationId,
+                role: "ASSISTANT",
+                content: "",
+              },
+            });
+            assistantMessageId = assistantMessage.id;
+
+            // Send conversation ID first
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ conversationId: activeConversationId, messageId: assistantMessageId })}\n\n`)
+            );
+
+            // Stream from provider
+            for await (const chunk of provider.stream(messages)) {
+              if (chunk.done) break;
+              assistantContent += chunk.content;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ content: chunk.content })}\n\n`)
+              );
+            }
+
+            // Update message with full content
+            await prisma.message.update({
+              where: { id: assistantMessageId },
+              data: { content: assistantContent },
+            });
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+            controller.close();
+          } catch (error) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ error: "Failed to generate response" })}\n\n`)
+            );
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Fallback: mock streaming response
+    const mockResponse = `I'm ${employee.name}, your ${employee.title || "AI assistant"}. I've received your message about "${message.slice(0, 30)}..." and I'm ready to help you with ${brand.name}.\n\nThis is a placeholder response. To enable real AI responses, add your Groq API key to the .env file:\n\n\`\`\`\nGROQ_API_KEY=your_key_here\n\`\`\`\n\nThen restart the dev server.`;
 
     // Save assistant message
     const assistantMessage = await prisma.message.create({
@@ -85,20 +171,20 @@ ${brandContext ? `\n\nBrand Context:\n${brandContext}` : ""}`;
         content: mockResponse,
       },
     });
+    assistantMessageId = assistantMessage.id;
 
     // Create a readable stream for SSE
-    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         // Send conversation ID first
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ conversationId: activeConversationId, messageId: assistantMessage.id })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ conversationId: activeConversationId, messageId: assistantMessageId })}\n\n`)
         );
 
         // Stream the response word by word
         const words = mockResponse.split(" ");
         for (let i = 0; i < words.length; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 30));
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ content: words[i] + " " })}\n\n`)
           );

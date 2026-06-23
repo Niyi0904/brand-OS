@@ -51,7 +51,17 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const brandBrainData = brandBrainSchema.parse(body);
+    const parsed = brandBrainSchema.parse(body);
+
+    // Convert foundedYear from string to number for Prisma Int field
+    const { foundedYear, ...restData } = parsed;
+    const updateData: Record<string, unknown> = { ...restData };
+    if (foundedYear) {
+      const year = parseInt(foundedYear, 10);
+      updateData.foundedYear = isNaN(year) ? null : year;
+    } else {
+      updateData.foundedYear = null;
+    }
 
     const brand = await prisma.brand.findFirst({
       where: {
@@ -68,9 +78,9 @@ export async function PUT(
       where: {
         brandId: id,
       },
-      update: brandBrainData,
+      update: updateData,
       create: {
-        ...brandBrainData,
+        ...updateData,
         brandId: id,
       },
     });

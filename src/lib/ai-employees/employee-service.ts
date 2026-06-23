@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { BrandBrain } from "@prisma/client";
+import type { BrandBrain } from "@prisma/client";
 import { AIProviderFactory, AIMessage, AICompletionOptions } from "@/lib/ai";
 import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
 
@@ -11,11 +11,10 @@ export class EmployeeService {
       const name = employeeData.name;
       if (!name) continue;
 
-      // Look up by name + userId to avoid fragile composite IDs
+      // Look up by slug to avoid fragile composite IDs
       const existing = await prisma.aIEmployee.findFirst({
         where: {
-          name,
-          userId,
+          slug: employeeData.slug,
           isSystem: true,
         },
         select: { id: true },
@@ -30,6 +29,8 @@ export class EmployeeService {
             isSystem: true,
             isCustom: false,
             name: employeeData.name ?? "",
+            slug: employeeData.slug,
+            icon: employeeData.icon,
           } as any,
         });
       }

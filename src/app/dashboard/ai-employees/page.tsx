@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EMPLOYEE_COLOR_MAP, EMPLOYEE_ICON_MAP } from "@/lib/ai-employees/default-employees";
 
 export default async function AIEmployeesPage() {
   const session = await auth();
@@ -76,12 +77,14 @@ export default async function AIEmployeesPage() {
           <EmployeeCard
             key={employee.id}
             id={employee.id}
+            slug={employee.slug}
             name={employee.name}
             title={employee.title}
             description={employee.description}
             strength={employee.purpose || "General"}
             workload={`${countsMap.get(employee.id) || 0} conversations`}
             isSystem={employee.isSystem}
+            accentColor={employee.accentColor}
           />
         ))}
       </section>
@@ -91,22 +94,36 @@ export default async function AIEmployeesPage() {
 
 type EmployeeCardData = {
   id: string;
+  slug: string | null;
   name: string;
   title: string;
   description?: string | null;
   strength: string;
   workload: string;
   isSystem: boolean;
+  accentColor: string | null;
 };
 
-function EmployeeCard({ id, name, title, description, strength, workload, isSystem }: EmployeeCardData) {
+function EmployeeCard({ id, slug, name, title, description, strength, workload, isSystem, accentColor }: EmployeeCardData) {
+  const chatHref = slug
+    ? `/dashboard/employees/${slug}`
+    : `/dashboard/ai-employees/${id}/chat`;
+
+  const color = accentColor || "var(--brand-accent)";
+
   return (
     <Card className="mos-card-hover">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="mos-icon-tile flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
-              <Bot className="h-5 w-5" />
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg"
+              style={{
+                backgroundColor: `${color}26`,
+                border: `1px solid ${color}40`,
+              }}
+            >
+              <Bot className="h-5 w-5" style={{ color }} />
             </div>
             <div className="min-w-0">
               <CardTitle className="truncate text-lg">{name}</CardTitle>
@@ -159,7 +176,7 @@ function EmployeeCard({ id, name, title, description, strength, workload, isSyst
         </div>
 
           <Button variant="outline" className="w-full" asChild>
-            <Link href={`/dashboard/ai-employees/${id}/chat`}>
+            <Link href={chatHref}>
               <MessageSquare className="h-4 w-4" />
               Start task
             </Link>

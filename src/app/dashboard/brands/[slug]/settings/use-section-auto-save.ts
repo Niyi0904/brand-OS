@@ -18,6 +18,17 @@ export function useSectionAutoSave(sectionId: string, slug: string) {
 
   const save = useCallback(
     async (formData: FormData) => {
+      // Dispatch progress tracking events for all fields in the form data
+      for (const [key, value] of formData.entries()) {
+        if (key !== "slug" && typeof value === "string") {
+          window.dispatchEvent(
+            new CustomEvent("brain-field-change", {
+              detail: { fieldId: key, value },
+            })
+          );
+        }
+      }
+
       if (isSavingRef.current) {
         // Queue the save if one is in-flight
         pendingDataRef.current = formData;

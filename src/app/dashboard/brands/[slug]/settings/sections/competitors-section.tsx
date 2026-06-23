@@ -1,15 +1,30 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { RepeatingRow } from "@/components/ui/repeating-row";
+import type { RowData } from "@/components/ui/repeating-row";
 
 interface CompetitorsSectionProps {
   slug: string;
   competitorList: string;
   competitiveAdvantages: string;
   thingsNeverDo: string;
+}
+
+function parseCompetitors(raw: string): RowData[] {
+  try {
+    const arr = JSON.parse(raw || "[]");
+    return arr.map((c: any, i: number) => ({
+      id: `competitor-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: typeof c === "string" ? c : c.name || "",
+      positioningNote: typeof c === "string" ? "" : c.positioningNote || "",
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export function CompetitorsSection({
@@ -20,33 +35,35 @@ export function CompetitorsSection({
 }: CompetitorsSectionProps) {
   const { save } = useSectionAutoSave("competitors", slug);
 
-  const competitors = (() => {
-    try {
-      return JSON.parse(competitorList || "[]");
-    } catch {
-      return [];
+  // Local state so "Add another" works immediately
+  // ALWAYS show at least one empty row so input fields are visible
+  const [localCompetitors, setLocalCompetitors] = useState<RowData[]>(() => {
+    const parsed = parseCompetitors(competitorList);
+    if (parsed.length === 0) {
+      return [{ id: crypto.randomUUID(), name: "", positioningNote: "" }];
     }
-  })();
+    return parsed;
+  });
 
-  interface CompetitorRow {
-    id: string;
-    name: string;
-    positioningNote: string;
-    [key: string]: string;
-  }
-  const normalizedCompetitors = competitors.map((c: any, i: number) => ({
-    id: `competitor-${i}-${Date.now()}`,
-    name: typeof c === "string" ? c : c.name || "",
-    positioningNote: typeof c === "string" ? "" : c.positioningNote || "",
-  }));
+  useEffect(() => {
+    setLocalCompetitors(parseCompetitors(competitorList));
+  }, [competitorList]);
+
+  const handleCompetitorsChange = (rows: RowData[]) => {
+    setLocalCompetitors(rows);
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("competitorList", JSON.stringify(rows.map((r) => ({ name: r.name, positioningNote: r.positioningNote }))));
+    save(fd);
+  };
 
   return (
     <SectionWrapper
       title="Competitors"
       subtext="Who they're up against. The AI uses this to position the brand correctly and avoid endorsing competitors."
       completionState={
-        normalizedCompetitors.length > 0 || competitiveAdvantages || thingsNeverDo
-          ? normalizedCompetitors.length > 0 && (competitiveAdvantages || thingsNeverDo)
+        localCompetitors.length > 0 || competitiveAdvantages || thingsNeverDo
+          ? localCompetitors.length > 0 && (competitiveAdvantages || thingsNeverDo)
             ? "complete"
             : "partial"
           : "empty"
@@ -56,25 +73,14 @@ export function CompetitorsSection({
         <div className="space-y-2">
           <label className="mos-label text-sm font-medium">Competitors</label>
           <RepeatingRow
-            rows={normalizedCompetitors as any[]}
-            onChange={(rows) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("competitorList", JSON.stringify(rows.map((r) => ({ name: r.name, positioningNote: r.positioningNote }))));
-              save(fd);
-            }}
+            rows={localCompetitors}
+            onChange={handleCompetitorsChange}
             maxRows={5}
             fields={[
               { id: "name", label: "Name", placeholder: "Competitor name" },
               { id: "positioningNote", label: "Positioning", placeholder: "How they position themselves", type: "textarea" },
             ]}
             itemLabel="competitor"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("competitorList", JSON.stringify(normalizedCompetitors.map((r: { name: string; positioningNote: string }) => ({ name: r.name, positioningNote: r.positioningNote }))));
-              save(fd);
-            }}
           />
         </div>
 

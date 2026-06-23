@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
@@ -22,21 +23,34 @@ export function VoiceToneSection({
 }: VoiceToneSectionProps) {
   const { save } = useSectionAutoSave("voice-tone", slug);
 
-  const adjectives = (() => {
+  // Local state for tags so UI updates immediately (not waiting for API)
+  const [localAdjectives, setLocalAdjectives] = useState<string[]>(() => {
+    try { return JSON.parse(voiceAdjectives || "[]"); } catch { return []; }
+  });
+
+  // Sync from props when API save completes
+  useEffect(() => {
     try {
-      return JSON.parse(voiceAdjectives || "[]");
-    } catch {
-      return [];
-    }
-  })();
+      const parsed = JSON.parse(voiceAdjectives || "[]");
+      setLocalAdjectives(parsed);
+    } catch { /* ignore */ }
+  }, [voiceAdjectives]);
+
+  const handleAdjectiveChange = (tags: string[]) => {
+    setLocalAdjectives(tags); // update UI immediately
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("voiceAdjectives", JSON.stringify(tags));
+    save(fd); // fire save in background
+  };
 
   return (
     <SectionWrapper
       title="Voice & tone"
       subtext="This is what the AI reads before it writes anything for this brand."
       completionState={
-        adjectives.length > 0 || toneDescription || writingStyleNotes || thingsToAvoid
-          ? adjectives.length > 0 && (toneDescription || writingStyleNotes || thingsToAvoid)
+        localAdjectives.length > 0 || toneDescription || writingStyleNotes || thingsToAvoid
+          ? localAdjectives.length > 0 && (toneDescription || writingStyleNotes || thingsToAvoid)
             ? "complete"
             : "partial"
           : "empty"
@@ -48,21 +62,10 @@ export function VoiceToneSection({
             Voice adjectives
           </label>
           <TagInput
-            tags={adjectives}
-            onChange={(tags) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("voiceAdjectives", JSON.stringify(tags));
-              save(fd);
-            }}
+            tags={localAdjectives}
+            onChange={handleAdjectiveChange}
             maxTags={6}
             placeholder="e.g. Warm, direct, a little irreverent — never corporate"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("voiceAdjectives", JSON.stringify(adjectives));
-              save(fd);
-            }}
           />
         </div>
 

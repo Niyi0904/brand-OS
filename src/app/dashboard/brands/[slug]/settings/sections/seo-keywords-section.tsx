@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
@@ -22,29 +23,46 @@ export function SeoKeywordsSection({
 }: SeoKeywordsSectionProps) {
   const { save } = useSectionAutoSave("seo-keywords", slug);
 
-  const primary = (() => {
-    try {
-      return JSON.parse(primaryKeywords || "[]");
-    } catch {
-      return [];
-    }
-  })();
+  // Local state for tags so UI updates immediately (not waiting for API)
+  const [localPrimary, setLocalPrimary] = useState<string[]>(() => {
+    try { return JSON.parse(primaryKeywords || "[]"); } catch { return []; }
+  });
+  const [localSecondary, setLocalSecondary] = useState<string[]>(() => {
+    try { return JSON.parse(secondaryKeywords || "[]"); } catch { return []; }
+  });
 
-  const secondary = (() => {
-    try {
-      return JSON.parse(secondaryKeywords || "[]");
-    } catch {
-      return [];
-    }
-  })();
+  // Sync from props when API save completes
+  useEffect(() => {
+    try { setLocalPrimary(JSON.parse(primaryKeywords || "[]")); } catch { /* ignore */ }
+  }, [primaryKeywords]);
+
+  useEffect(() => {
+    try { setLocalSecondary(JSON.parse(secondaryKeywords || "[]")); } catch { /* ignore */ }
+  }, [secondaryKeywords]);
+
+  const handlePrimaryChange = (tags: string[]) => {
+    setLocalPrimary(tags);
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("primaryKeywords", JSON.stringify(tags));
+    save(fd);
+  };
+
+  const handleSecondaryChange = (tags: string[]) => {
+    setLocalSecondary(tags);
+    const fd = new FormData();
+    fd.set("slug", slug);
+    fd.set("secondaryKeywords", JSON.stringify(tags));
+    save(fd);
+  };
 
   return (
     <SectionWrapper
       title="SEO & keywords"
       subtext="The terms this brand wants to own. The AI weaves these in naturally when writing content."
       completionState={
-        primary.length > 0 || secondary.length > 0 || topicsToOwn || topicsToAvoid
-          ? primary.length > 0 && (secondary.length > 0 || topicsToOwn || topicsToAvoid)
+        localPrimary.length > 0 || localSecondary.length > 0 || topicsToOwn || topicsToAvoid
+          ? localPrimary.length > 0 && (localSecondary.length > 0 || topicsToOwn || topicsToAvoid)
             ? "complete"
             : "partial"
           : "empty"
@@ -56,21 +74,10 @@ export function SeoKeywordsSection({
             Primary keywords
           </label>
           <TagInput
-            tags={primary}
-            onChange={(tags) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("primaryKeywords", JSON.stringify(tags));
-              save(fd);
-            }}
+            tags={localPrimary}
+            onChange={handlePrimaryChange}
             maxTags={10}
             placeholder="e.g. project management, team collaboration, remote work"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("primaryKeywords", JSON.stringify(primary));
-              save(fd);
-            }}
           />
         </div>
 
@@ -79,21 +86,10 @@ export function SeoKeywordsSection({
             Secondary keywords
           </label>
           <TagInput
-            tags={secondary}
-            onChange={(tags) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("secondaryKeywords", JSON.stringify(tags));
-              save(fd);
-            }}
+            tags={localSecondary}
+            onChange={handleSecondaryChange}
             maxTags={20}
             placeholder="Long-tail keywords, related terms, synonyms"
-            onBlur={() => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("secondaryKeywords", JSON.stringify(secondary));
-              save(fd);
-            }}
           />
         </div>
 
