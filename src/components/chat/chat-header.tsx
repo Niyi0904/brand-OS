@@ -32,7 +32,7 @@ export function ChatHeader({
   const [showSwitcher, setShowSwitcher] = useState(false);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[rgba(8,9,15,0.78)] px-6 backdrop-blur-md">
+    <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

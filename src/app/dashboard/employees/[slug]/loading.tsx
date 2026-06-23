@@ -1,6 +1,6 @@
 export default function EmployeeChatLoading() {
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[var(--color-bg)]">
+    <div className="flex h-dvh w-full overflow-hidden bg-[var(--color-bg)]">
       {/* History panel skeleton */}
       <aside className="hidden w-[260px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-1)] md:flex">
         <div className="p-4">

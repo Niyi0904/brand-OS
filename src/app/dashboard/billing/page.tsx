@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { getSubscriptionAction } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 function SubscriptionStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -21,70 +23,69 @@ async function BillingContent() {
 
   if (!subscription) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-1)] p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">No subscription found</h2>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-          You are currently on the Free plan. Upgrade to unlock more features.
-        </p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>No subscription found</CardTitle>
+          <CardDescription>You are currently on the Free plan. Upgrade to unlock more features.</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-1)] p-6">
-        <div className="flex items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Current Plan</h2>
+            <CardTitle>Current Plan</CardTitle>
             <p className="mt-1 text-2xl font-bold text-[var(--color-text-primary)]">{subscription.plan}</p>
           </div>
           <SubscriptionStatusBadge status={subscription.status} />
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-[var(--color-text-secondary)]">AI Credits</p>
-            <p className="mt-1 text-[var(--color-text-primary)]">
-              {subscription.aiCreditsUsed} / {subscription.aiCredits}
-            </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-[var(--color-text-secondary)]">AI Credits</p>
+              <p className="mt-1 text-[var(--color-text-primary)]">
+                {subscription.aiCreditsUsed} / {subscription.aiCredits}
+              </p>
+            </div>
+            <div>
+              <p className="text-[var(--color-text-secondary)]">Current Period Ends</p>
+              <p className="mt-1 text-[var(--color-text-primary)]">
+                {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "N/A"}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[var(--color-text-secondary)]">Current Period Ends</p>
-            <p className="mt-1 text-[var(--color-text-primary)]">
-              {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "N/A"}
-            </p>
-          </div>
-        </div>
 
-        {subscription.cancelAtPeriodEnd && (
-          <p className="mt-4 text-sm text-yellow-400">
-            Your subscription will cancel at the end of the current period.
-          </p>
-        )}
-      </div>
+          {subscription.cancelAtPeriodEnd && (
+            <p className="text-sm text-yellow-400">Your subscription will cancel at the end of the current period.</p>
+          )}
 
-      {(subscription.status === "PAST_DUE" || subscription.status === "CANCELLED") && (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
-          <h3 className="text-sm font-medium text-red-400">Payment Issue</h3>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            {subscription.status === "PAST_DUE"
-              ? "Your payment failed. Please update your payment method to restore access."
-              : "Your subscription has been cancelled. Resubscribe to regain access."}
-          </p>
-        </div>
-      )}
+          {(subscription.status === "PAST_DUE" || subscription.status === "CANCELLED") && (
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+              <h3 className="text-sm font-medium text-red-400">Payment Issue</h3>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                {subscription.status === "PAST_DUE"
+                  ? "Your payment failed. Please update your payment method to restore access."
+                  : "Your subscription has been cancelled. Resubscribe to regain access."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {subscription.plan === "FREE" && (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-1)] p-6">
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Upgrade your plan</h3>
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-            Get access to more AI credits, advanced features, and priority support.
-          </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upgrade your plan</CardTitle>
+            <CardDescription>Get access to more AI credits, advanced features, and priority support.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
             <PlanCard name="Pro" price="$29/mo" description="For growing teams" priceId={process.env.STRIPE_PRICE_ID_PRO ?? ""} />
             <PlanCard name="Enterprise" price="$99/mo" description="For large organizations" priceId={process.env.STRIPE_PRICE_ID_ENTERPRISE ?? ""} />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -99,12 +100,9 @@ function PlanCard({ name, price, description, priceId }: { name: string; price: 
       <p className="mt-1 text-2xl font-bold text-[var(--color-text-primary)]">{price}</p>
       <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>
       <input type="hidden" name="priceId" value={priceId} />
-      <button
-        type="submit"
-        className="mt-4 w-full rounded-md bg-[var(--brand-accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-      >
+      <Button type="submit" className="mt-4 w-full">
         Upgrade to {name}
-      </button>
+      </Button>
     </form>
   );
 }

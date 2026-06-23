@@ -102,7 +102,7 @@ export function MessageThread({ messages, employee, brand, isStreaming = false }
                 </p>
               </div>
               {message.role === "assistant" && (
-                <div className="mt-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="mt-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"

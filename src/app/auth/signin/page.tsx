@@ -19,13 +19,13 @@ export default function SignInPage() {
   const credentialsRef = useRef({ email: "", password: "" });
   const [state, formAction, pending] = useActionState(
     async (prevState: SignInActionState, formData: FormData) => {
-    credentialsRef.current = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-    };
-    return validateSignInFields(prevState, formData);
-  },
-  initialState
+      credentialsRef.current = {
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+      };
+      return validateSignInFields(prevState, formData);
+    },
+    initialState
   );
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -77,45 +77,38 @@ export default function SignInPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <form id="signin-form" action={formAction} className="space-y-4">
-              {state?.message || serverError ? (
+              {(state?.message || serverError) ? (
                 <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
                   {serverError || state.message}
                 </div>
               ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-                {state?.errors?.email ? (
-                  <p className="text-xs text-red-400">{state.errors.email[0]}</p>
-                ) : null}
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  startIcon={<Mail className="h-4 w-4" />}
+                  error={state?.errors?.email?.[0]}
+                  required
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Password"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-                {state?.errors?.password ? (
-                  <p className="text-xs text-red-400">{state.errors.password[0]}</p>
-                ) : null}
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  startIcon={<Lock className="h-4 w-4" />}
+                  error={state?.errors?.password?.[0]}
+                  required
+                />
               </div>
+
               <Button type="submit" className="w-full" disabled={pending}>
                 {pending ? "Signing in..." : "Sign in"}
                 <ArrowRight className="h-4 w-4" />
@@ -145,7 +138,7 @@ export default function SignInPage() {
               Forgot your password?
             </Link>
             <p className="mos-muted">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/auth/signup" className="text-[var(--brand-accent-strong)] hover:underline">
                 Sign up
               </Link>

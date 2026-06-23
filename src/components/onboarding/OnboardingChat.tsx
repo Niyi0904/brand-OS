@@ -116,10 +116,10 @@ export function OnboardingChat({
   const isAgencyUser = false; // Simplified — would check from brand data
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-[var(--color-bg)]">
+    <div className="flex h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[var(--color-bg)]">
       <main className="flex flex-1 flex-col overflow-hidden">
         {/* Chat header */}
-        <header className="flex h-14 items-center gap-3 border-b border-[var(--color-border)] bg-[rgba(8,9,15,0.78)] px-4 backdrop-blur-md sm:px-6">
+        <header className="flex h-14 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
           <EmployeeAvatar
             name={employee.name}
             icon={employee.icon}
@@ -153,7 +153,7 @@ export function OnboardingChat({
 
         {/* Sparse brain banner */}
         {isSparse && !sparseDismissed && (
-          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-[rgba(242,195,107,0.22)] bg-[rgba(242,195,107,0.06)] px-3 py-2 sm:mx-6 animate-banner-enter">
+          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-[var(--color-warning)]/20 bg-[var(--color-warning)]/10 px-3 py-2 sm:mx-6 animate-banner-enter">
             <p className="flex-1 text-xs text-[var(--color-text-secondary)]">
               Your Brand Brain is light right now — the AI will do its best with
               what it has. You can add more context any time.
@@ -179,7 +179,7 @@ export function OnboardingChat({
 
         {/* Error state */}
         {error && (
-          <div className="mx-4 mt-3 rounded-lg border border-[rgba(255,138,138,0.22)] bg-[rgba(255,138,138,0.06)] p-4 sm:mx-6">
+          <div className="mx-4 mt-3 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4 sm:mx-6">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-[var(--color-red)]" />
               <span className="text-sm text-[var(--color-red)]">

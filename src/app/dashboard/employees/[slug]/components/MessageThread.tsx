@@ -159,7 +159,7 @@ export function MessageThread({
 
                     {/* Message actions — only on complete AI messages */}
                     {!isLastAssistant && (
-                      <div className="mt-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                      <div className="mt-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
                         <MessageActions
                           messageId={message.id}
                           content={message.content}

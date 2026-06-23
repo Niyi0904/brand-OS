@@ -64,7 +64,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect("/auth/signin");
   }
 
-  // Onboarding gate: redirect users who haven't created a brand yet
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { onboardingCompleted: true, onboardingStep: true },
@@ -76,7 +75,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
   const subscription = await getUserSubscription(session.user.id);
 
-  // Fetch brands for the BrandProvider initializer
   const brands = await prisma.brand.findMany({
     where: { userId: session.user.id },
     select: {
@@ -92,7 +90,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     orderBy: { createdAt: "desc" },
   });
 
-  // Read the active brand cookie to pre-select the current workspace
   const activeBrandId = await getServerActiveBrandId();
 
   return (
@@ -102,21 +99,21 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         <DashboardShell>
         <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">
           <div className="flex h-full flex-col p-5">
-            <div className="mb-4">
-              <BrandSwitcher />
-            </div>
-
-            <Link href="/dashboard" className="mb-7 flex items-center gap-3 shrink-0">
+            <Link href="/dashboard" className="mb-6 flex items-center gap-3 shrink-0">
               <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-sm font-semibold tracking-wide">MarketingOS</div>
-                <div className="mos-subtle text-xs">AI marketing command</div>
+                <div className="mos-subtle text-xs">Brand & Marketing OS</div>
               </div>
             </Link>
 
-            <div className="flex-1 overflow-y-auto scroll-smooth overscroll-contain -mx-5 px-5">
+            <div className="mb-4">
+              <BrandSwitcher />
+            </div>
+
+            <div className="flex-1 overflow-y-auto -mx-5 px-5">
               <SidebarSection label="Workspace" items={primaryNavItems} />
               <SidebarSection label="Intelligence" items={intelligenceNavItems} />
               <SidebarSection label="System" items={systemNavItems} />
@@ -126,16 +123,16 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               <div className="mos-panel p-4">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4 text-[var(--brand-accent-strong)]" />
-                  Brand Brain status
+                  Brand Brain
                 </div>
                 <p className="mos-muted text-xs leading-5">
-                  Context quality improves every employee response. Keep brand strategy, voice, and offer data current.
+                  Context quality improves every employee response. Keep brand strategy and voice data current.
                 </p>
               </div>
 
-              <Link 
+              <Link
                 href="/dashboard/settings"
-                className="flex items-center gap-3 border-t pt-4 mos-divider hover:opacity-80 transition-opacity"
+                className="flex items-center gap-3 border-t pt-4 mos-divider transition-colors hover:opacity-80"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-3)]">
                   {session.user?.image ? (
@@ -155,7 +152,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
         <div className="lg:pl-[var(--sidebar-width)]">
           <DashboardHeader />
-
           <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </DashboardShell>
@@ -167,8 +163,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 function SidebarSection({ label, items }: { label: string; items: NavItemConfig[] }) {
   return (
     <div className="mb-6">
-      <p className="mos-subtle mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em]">{label}</p>
-      <nav className="space-y-1">
+      <p className="mos-subtle mb-2 px-3 text-xs font-semibold uppercase tracking-[0.12em]">{label}</p>
+      <nav className="space-y-0.5">
         {items.map((item) => (
           <NavItem key={item.href} item={item} />
         ))}
@@ -180,10 +176,14 @@ function SidebarSection({ label, items }: { label: string; items: NavItemConfig[
 function NavItem({ item }: { item: NavItemConfig }) {
   return (
     <Link
-      href={item.href}
-      className="group flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)]"
+      href={item.status === "Soon" ? "#" : item.href}
+      className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        item.status === "Soon"
+          ? "text-[var(--color-text-tertiary)] cursor-not-allowed"
+          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)]"
+      }`}
     >
-      <span className="flex h-5 w-5 items-center justify-center text-[var(--color-text-tertiary)] transition-colors group-hover:text-[var(--brand-accent-strong)] [&_svg]:h-4 [&_svg]:w-4">
+      <span className="flex h-5 w-5 items-center justify-center [&_svg]:h-4 [&_svg]:w-4 text-[var(--color-text-tertiary)] transition-colors group-hover:text-[var(--brand-accent-strong)]">
         {item.icon}
       </span>
       <span className="min-w-0 flex-1 truncate">{item.label}</span>

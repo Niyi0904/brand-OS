@@ -2,6 +2,8 @@
 
 import { Sparkles } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
 type ErrorPageProps = {
   error: Error & { digest?: string };
   reset: () => void;
@@ -22,12 +24,9 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           {error.message}
         </p>
       ) : null}
-      <button
-        onClick={reset}
-        className="mos-button-primary mt-8 inline-flex h-10 items-center justify-center rounded-md px-6 text-sm font-medium"
-      >
+      <Button onClick={reset} className="mt-8">
         Try again
-      </button>
+      </Button>
     </div>
   );
 }

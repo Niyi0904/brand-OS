@@ -4,14 +4,14 @@ import { redirect } from "next/navigation";
 import {
   ArrowUpRight,
   BarChart3,
+  Bot,
+  Building2,
   Calendar,
-  CheckCircle2,
   MessageSquare,
   Plus,
   Sparkles,
   Target,
   TrendingUp,
-  Building2,
 } from "lucide-react";
 
 import { auth } from "@/lib/auth";
@@ -19,11 +19,9 @@ import { prisma } from "@/lib/db";
 import { getServerActiveBrandId } from "@/lib/brand-server";
 import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHover, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 async function getDashboardStats(userId: string, brandId: string | null) {
-  // When a brand is active, scope every query to that brand.
-  // When no brand is active, show aggregate counts.
   const brandFilter = brandId ? { brandId } : { brand: { userId } };
   const brandWhere = brandId ? { id: brandId, userId } : { userId };
 
@@ -54,13 +52,7 @@ async function getDashboardStats(userId: string, brandId: string | null) {
     avgCompleteness = Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
   }
 
-  return {
-    activeBrand,
-    brandCount,
-    campaignCount,
-    conversationCount,
-    avgCompleteness,
-  };
+  return { activeBrand, brandCount, campaignCount, conversationCount, avgCompleteness };
 }
 
 export default async function DashboardPage() {
@@ -71,7 +63,7 @@ export default async function DashboardPage() {
   const stats = await getDashboardStats(session.user.id, activeBrandId);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       {/* Active-brand header */}
       {stats.activeBrand ? (
         <section className="flex items-center gap-3">
@@ -85,9 +77,7 @@ export default async function DashboardPage() {
           >
             <Building2
               className="h-5 w-5"
-              style={{
-                color: stats.activeBrand.accentColour ?? "var(--brand-accent)",
-              }}
+              style={{ color: stats.activeBrand.accentColour ?? "var(--brand-accent)" }}
             />
           </div>
           <div>
@@ -99,22 +89,23 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+      {/* Command center */}
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="mos-card overflow-hidden">
-          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_260px] lg:p-7">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_240px] lg:p-8">
             <div>
               <div className="mos-pill mb-5 inline-flex rounded-full px-3 py-1 text-xs font-medium">
                 Marketing command center
               </div>
-              <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-4xl">
+              <h1 className="max-w-3xl text-2xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-3xl">
                 {stats.activeBrand
-                  ? `Running ${stats.activeBrand.name} with context, clarity, and AI.`
-                  : "Run every brand with context, clarity, and AI employees that know the brief."}
+                  ? `Running ${stats.activeBrand.name} with AI clarity.`
+                  : "Run every brand with context, clarity, and AI employees."}
               </h1>
-              <p className="mos-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base">
+              <p className="mos-muted mt-4 max-w-xl text-sm leading-6">
                 {stats.activeBrand
-                  ? `Keep ${stats.activeBrand.name}'s Brand Brain data current, route work to the right specialist, and track the next marketing moves.`
-                  : "Keep Brand Brain data current, route work to the right specialist, and track the next marketing moves from one focused workspace."}
+                  ? `Keep ${stats.activeBrand.name}'s Brand Brain current, route work to specialist AI employees, and track the next marketing moves.`
+                  : "Keep Brand Brain data current, route work to the right specialist, and track the next moves from one focused workspace."}
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Button asChild>
@@ -134,21 +125,21 @@ export default async function DashboardPage() {
 
             <div className="mos-panel flex flex-col justify-between p-5">
               <div>
-                <p className="mos-subtle text-xs font-semibold uppercase tracking-[0.18em]">
+                <p className="mos-subtle text-xs font-semibold uppercase tracking-[0.12em]">
                   {stats.activeBrand ? "Brand readiness" : "Workspace readiness"}
                 </p>
-                <div className="mt-5 flex items-end gap-2">
-                  <span className="text-5xl font-semibold">{stats.avgCompleteness}</span>
-                  <span className="mos-muted mb-2 text-sm">/100</span>
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-4xl font-semibold">{stats.avgCompleteness}</span>
+                  <span className="mos-muted mb-1 text-sm">/100</span>
                 </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
                   <div
                     className="h-full rounded-full bg-[var(--brand-accent)]"
                     style={{ width: `${stats.avgCompleteness}%` }}
                   />
                 </div>
               </div>
-              <div className="mt-6 space-y-3">
+              <div className="mt-5 space-y-3">
                 <ReadinessRow label="Brands" value={`${stats.brandCount} active`} />
                 <ReadinessRow label="Campaigns" value={`${stats.campaignCount} running`} />
                 <ReadinessRow label="AI sessions" value={`${stats.conversationCount} total`} />
@@ -170,19 +161,21 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stat cards */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Active Campaigns" value={`${stats.campaignCount}`} change="Real-time" icon={<Target />} />
-        <StatCard title="Brands" value={`${stats.brandCount}`} change="In workspace" icon={<Calendar />} />
+        <StatCard title="Brands" value={`${stats.brandCount}`} change="In workspace" icon={<Building2 />} />
         <StatCard title="AI Generations" value={`${stats.conversationCount}`} change="Total sessions" icon={<Sparkles />} />
         <StatCard title="Brand Health" value={`${stats.avgCompleteness}%`} change="Avg completeness" icon={<TrendingUp />} />
       </section>
 
+      {/* Quick actions */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <QuickActionCard
           title="Campaign brief"
           description="Turn a business objective into a structured campaign plan."
           icon={<Target />}
-          href="/dashboard/campaigns/new"
+          href="/dashboard/ai-employees"
           signal="Strategy"
         />
         <QuickActionCard
@@ -193,10 +186,10 @@ export default async function DashboardPage() {
           signal="Execution"
         />
         <QuickActionCard
-          title="Content calendar"
-          description="Plan the next seven days of publish-ready assets."
+          title="Content planner"
+          description="Plan the next cycle of publish-ready assets and campaigns."
           icon={<Calendar />}
-          href="/dashboard/content-planner"
+          href="/dashboard/ai-employees"
           signal="Scheduling"
         />
       </section>
@@ -204,9 +197,9 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, change, icon }: StatCardProps) {
+function StatCard({ title, value, change, icon }: { title: string; value: string; change: string; icon: ReactNode }) {
   return (
-    <Card className="mos-card-hover">
+    <CardHover>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className="mos-icon-tile flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4">
@@ -220,13 +213,13 @@ function StatCard({ title, value, change, icon }: StatCardProps) {
           {change}
         </p>
       </CardContent>
-    </Card>
+    </CardHover>
   );
 }
 
-function QuickActionCard({ title, description, icon, href, signal }: QuickActionCardProps) {
+function QuickActionCard({ title, description, icon, href, signal }: { title: string; description: string; icon: ReactNode; href: string; signal: string }) {
   return (
-    <Card className="mos-card-hover">
+    <CardHover>
       <CardHeader>
         <div className="mb-4 flex items-center justify-between">
           <div className="mos-icon-tile flex h-11 w-11 items-center justify-center rounded-lg [&_svg]:h-5 [&_svg]:w-5">
@@ -245,7 +238,7 @@ function QuickActionCard({ title, description, icon, href, signal }: QuickAction
           </Link>
         </Button>
       </CardContent>
-    </Card>
+    </CardHover>
   );
 }
 
@@ -259,7 +252,7 @@ function PriorityItem({ icon, title, meta }: { icon: ReactNode; title: string; m
         <p className="truncate text-sm font-medium">{title}</p>
         <p className="mos-subtle text-xs">{meta}</p>
       </div>
-      <CheckCircle2 className="h-4 w-4 text-[var(--color-positive)]" />
+      <ArrowUpRight className="h-4 w-4 text-[var(--color-positive)]" />
     </div>
   );
 }
@@ -268,24 +261,7 @@ function ReadinessRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
       <span className="mos-muted">{label}</span>
-      <span className="mos-success-pill rounded-full px-2 py-0.5 text-xs">
-        {value}
-      </span>
+      <span className="mos-success-pill rounded-full px-2 py-0.5 text-xs">{value}</span>
     </div>
   );
 }
-
-type StatCardProps = {
-  title: string;
-  value: string;
-  change: string;
-  icon: ReactNode;
-};
-
-type QuickActionCardProps = {
-  title: string;
-  description: string;
-  icon: ReactNode;
-  href: string;
-  signal: string;
-};

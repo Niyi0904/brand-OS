@@ -36,11 +36,7 @@ export function SparseBrainWarning({
 
   return (
     <div
-      className="mx-6 mb-2 flex items-center gap-3 rounded-lg border px-4 py-3"
-      style={{
-        backgroundColor: "rgba(251, 191, 36, 0.1)",
-        borderColor: "rgba(251, 191, 36, 0.3)",
-      }}
+      className="mx-6 mb-2 flex items-center gap-3 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-4 py-3"
       role="alert"
     >
       <p className="flex-1 text-sm text-[var(--color-text-primary)]">

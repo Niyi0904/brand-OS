@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import {
+  ArrowLeft,
   Bot,
   Brain,
   Edit,
@@ -42,17 +43,15 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
   const completeness = computeBrandBrainCompleteness(brand.brandBrain);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       {/* Header */}
       <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
-          <Link
-            href="/dashboard/brands"
-            className="mos-button-ghost inline-flex h-10 w-10 items-center justify-center rounded-lg"
-            aria-label="Back to brands"
-          >
-            ←
-          </Link>
+          <Button variant="ghost" size="icon" asChild aria-label="Back to brands">
+            <Link href="/dashboard/brands">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
           <div>
             <div className="flex items-center gap-3">
               {brand.logo ? (
@@ -100,7 +99,7 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
       </section>
 
       {/* Health & Stats */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Brain health</CardTitle>
@@ -164,7 +163,7 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Link
             href={`/dashboard/brands/${slug}/settings`}
-            className="mos-card-hover group rounded-xl border p-5 transition-colors hover:bg-[var(--color-surface-2)]"
+            className="mos-card-hover group rounded-xl border border-[var(--color-border)] p-5 transition-colors hover:bg-[var(--color-surface-2)]"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-3)] group-hover:bg-[var(--color-surface-2)]">
               <Brain className="h-5 w-5 text-[var(--brand-accent-strong)]" />
@@ -177,7 +176,7 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
 
           <Link
             href={`/dashboard/employees`}
-            className="mos-card-hover group rounded-xl border p-5 transition-colors hover:bg-[var(--color-surface-2)]"
+            className="mos-card-hover group rounded-xl border border-[var(--color-border)] p-5 transition-colors hover:bg-[var(--color-surface-2)]"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-3)] group-hover:bg-[var(--color-surface-2)]">
               <Bot className="h-5 w-5 text-[var(--brand-accent-strong)]" />
@@ -190,7 +189,7 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
 
           <Link
             href={`/dashboard/brands`}
-            className="mos-card-hover group rounded-xl border p-5 transition-colors hover:bg-[var(--color-surface-2)]"
+            className="mos-card-hover group rounded-xl border border-[var(--color-border)] p-5 transition-colors hover:bg-[var(--color-surface-2)]"
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-surface-3)] group-hover:bg-[var(--color-surface-2)]">
               <Settings2 className="h-5 w-5 text-[var(--brand-accent-strong)]" />
@@ -216,22 +215,10 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
         </div>
 
         {brand.brandBrain ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <BrainSummaryCard
-              title="Tagline"
-              content={brand.brandBrain.tagline}
-              empty="Not set"
-            />
-            <BrainSummaryCard
-              title="Industry"
-              content={brand.brandBrain.industry}
-              empty="Not set"
-            />
-            <BrainSummaryCard
-              title="Voice"
-              content={brand.brandBrain.voiceAdjectives}
-              empty="Not set"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <BrainSummaryCard title="Tagline" content={brand.brandBrain.tagline} empty="Not set" />
+            <BrainSummaryCard title="Industry" content={brand.brandBrain.industry} empty="Not set" />
+            <BrainSummaryCard title="Voice" content={brand.brandBrain.voiceAdjectives} empty="Not set" />
           </div>
         ) : (
           <Card>
@@ -244,9 +231,7 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
                 </p>
               </div>
               <Button asChild>
-                <Link href={`/dashboard/brands/${slug}/settings`}>
-                  Configure now
-                </Link>
+                <Link href={`/dashboard/brands/${slug}/settings`}>Configure now</Link>
               </Button>
             </CardContent>
           </Card>
@@ -256,21 +241,11 @@ export default async function BrandOverviewPage({ params }: BrandOverviewPagePro
   );
 }
 
-function BrainSummaryCard({
-  title,
-  content,
-  empty,
-}: {
-  title: string;
-  content: string | null | undefined;
-  empty: string;
-}) {
+function BrainSummaryCard({ title, content, empty }: { title: string; content: string | null | undefined; empty: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-[var(--color-text-secondary)]">
-          {title}
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-[var(--color-text-secondary)]">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm leading-6 text-[var(--color-text-primary)]">

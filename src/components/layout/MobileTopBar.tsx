@@ -31,6 +31,9 @@ export function MobileTopBar({ onMenuToggle, onBrandTrigger }: MobileTopBarProps
           aria-label={`Active brand: ${currentBrand.name}. Tap to switch.`}
         >
           <BrandAvatar brand={currentBrand} size={32} />
+          <span className="text-sm font-medium text-[var(--color-text-primary)] truncate max-w-[120px]">
+            {currentBrand.name}
+          </span>
         </button>
       )}
     </div>

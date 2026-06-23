@@ -5,14 +5,13 @@ import { Bot, Copy, Edit, MessageSquare, MoreVertical, Plus, Sparkles, Trash2 } 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHover, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EMPLOYEE_COLOR_MAP, EMPLOYEE_ICON_MAP } from "@/lib/ai-employees/default-employees";
 
 export default async function AIEmployeesPage() {
   const session = await auth();
@@ -31,7 +30,6 @@ export default async function AIEmployeesPage() {
     ],
   });
 
-  // Count open conversations per employee
   const employeeIds = employees.map((e) => e.id);
   const conversationCounts = await prisma.conversation.groupBy({
     by: ["employeeId"],
@@ -43,11 +41,10 @@ export default async function AIEmployeesPage() {
   });
 
   const countsMap = new Map(conversationCounts.map((c) => [c.employeeId, c._count.id]));
-
   const totalOpenWork = employees.reduce((sum, e) => sum + (countsMap.get(e.id) || 0), 0);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mos-pill mb-3 inline-flex rounded-full px-3 py-1 text-xs font-medium">
@@ -66,28 +63,44 @@ export default async function AIEmployeesPage() {
         </Button>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <TeamSignal title="Available specialists" value={`${employees.length}`} detail="Roles enabled" />
         <TeamSignal title="Open work" value={`${totalOpenWork}`} detail="Active conversations" />
         <TeamSignal title="Context coverage" value="92%" detail="Brand Brain ready" />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {employees.map((employee) => (
-          <EmployeeCard
-            key={employee.id}
-            id={employee.id}
-            slug={employee.slug}
-            name={employee.name}
-            title={employee.title}
-            description={employee.description}
-            strength={employee.purpose || "General"}
-            workload={`${countsMap.get(employee.id) || 0} conversations`}
-            isSystem={employee.isSystem}
-            accentColor={employee.accentColor}
-          />
-        ))}
-      </section>
+      {employees.length === 0 ? (
+        <div className="mos-card flex flex-col items-center gap-4 py-16 text-center">
+          <Bot className="h-12 w-12 text-[var(--color-text-tertiary)]" />
+          <div>
+            <h3 className="text-lg font-semibold">No AI employees yet</h3>
+            <p className="mos-muted mt-1 text-sm">Create your first AI employee to start producing marketing work.</p>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/ai-employees/new">
+              <Plus className="h-4 w-4" />
+              Create employee
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {employees.map((employee) => (
+            <EmployeeCard
+              key={employee.id}
+              id={employee.id}
+              slug={employee.slug}
+              name={employee.name}
+              title={employee.title}
+              description={employee.description}
+              strength={employee.purpose || "General"}
+              workload={`${countsMap.get(employee.id) || 0} conversations`}
+              isSystem={employee.isSystem}
+              accentColor={employee.accentColor}
+            />
+          ))}
+        </section>
+      )}
     </div>
   );
 }
@@ -106,11 +119,10 @@ type EmployeeCardData = {
 
 function EmployeeCard({ id, slug, name, title, description, strength, workload, isSystem, accentColor }: EmployeeCardData) {
   const chatHref = `/dashboard/employees/${slug || id}`;
-
   const color = accentColor || "var(--brand-accent)";
 
   return (
-    <Card className="mos-card-hover">
+    <CardHover>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -153,8 +165,8 @@ function EmployeeCard({ id, slug, name, title, description, strength, workload, 
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <p className="mos-muted min-h-[72px] text-sm leading-6">{description || "No description provided."}</p>
+      <CardContent className="space-y-4">
+        <p className="mos-muted min-h-[40px] text-sm leading-6">{description || "No description provided."}</p>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="mos-panel p-3">
@@ -170,17 +182,16 @@ function EmployeeCard({ id, slug, name, title, description, strength, workload, 
         <div className="flex flex-wrap items-center gap-2">
           {isSystem ? <span className="mos-pill rounded-full px-3 py-1 text-xs font-medium">System</span> : null}
           <span className="mos-success-pill rounded-full px-3 py-1 text-xs font-medium">Active</span>
-          <span className="mos-warning-pill rounded-full px-3 py-1 text-xs font-medium">M3 preview</span>
         </div>
 
-          <Button variant="outline" className="w-full" asChild>
-            <Link href={chatHref}>
-              <MessageSquare className="h-4 w-4" />
-              Start task
-            </Link>
-          </Button>
+        <Button variant="outline" className="w-full" asChild>
+          <Link href={chatHref}>
+            <MessageSquare className="h-4 w-4" />
+            Start task
+          </Link>
+        </Button>
       </CardContent>
-    </Card>
+    </CardHover>
   );
 }
 

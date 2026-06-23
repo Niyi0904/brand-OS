@@ -6,7 +6,7 @@
   :root {
     --sidebar-width: 280px;
     --brand-accent: #7c9cff;
-    --brand-accent-strong: #c2d1ff;
+    --brand-accent-strong: #a6bdff;
     --color-bg: #08090f;
     --color-surface-1: #101119;
     --color-surface-2: #171924;
@@ -22,6 +22,26 @@
     --color-red: #ff8a8a;
     --color-amber: #f2c36b;
     --color-green: #7dd3a0;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-base: 0.9375rem;
+    --font-size-lg: 1.0625rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+    --font-size-5xl: 3rem;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 18px 48px rgba(0, 0, 0, 0.28);
 
     --background: 230 30% 5%;
     --foreground: 0 0% 94%;
@@ -51,6 +71,8 @@
 
   html {
     background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
@@ -66,6 +88,40 @@
   ::selection {
     background: rgba(124, 156, 255, 0.32);
     color: var(--color-text-primary);
+  }
+
+  /* Smooth scrollbar for Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -85,23 +141,6 @@
     backdrop-filter: blur(20px);
   }
 
-  .mos-sidebar .overflow-y-auto::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .mos-sidebar .overflow-y-auto::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .mos-sidebar .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
-  }
-
-  .mos-sidebar .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.16);
-  }
-
   .mos-topbar {
     background: rgba(8, 9, 15, 0.78);
     border-color: var(--color-border);
@@ -113,9 +152,9 @@
       linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
       var(--color-surface-1);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     color: var(--color-text-primary);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--shadow-xl);
   }
 
   .mos-card-hover {
@@ -130,7 +169,7 @@
   .mos-panel {
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
   }
 
   .mos-button-primary {
@@ -238,219 +277,7 @@
     background: var(--color-surface-1);
     border: 1px solid var(--color-border);
     color: var(--color-text-primary);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
-  }
-}
-
-/* Animations */
-@keyframes chip-enter {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-@keyframes chip-exit {
-  from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.85); opacity: 0; }
-}
-
-@keyframes row-expand {
-  from { height: 0; opacity: 0; }
-  to { height: auto; opacity: 1; }
-}
-
-@keyframes row-collapse {
-  from { height: auto; opacity: 1; }
-  to { height: 0; opacity: 0; }
-}
-
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-.animate-chip-enter {
-  animation: chip-enter 150ms ease-out;
-}
-
-.animate-chip-exit {
-  animation: chip-exit 100ms ease-in;
-}
-
-.animate-row-expand {
-  animation: row-expand 200ms ease-out;
-}
-
-.animate-row-collapse {
-  animation: row-collapse 150ms ease-in;
-}
-
-.animate-skeleton-pulse {
-  animation: skeleton-pulse 1200ms ease-in-out infinite;
-}
-
-.animate-fade-in {
-  animation: fade-in 200ms ease;
-}
-
-.animate-fade-out {
-  animation: fade-out 400ms ease-out;
-}
-
-.animate-dropdown-open {
-  animation: dropdown-open 150ms ease-out;
-}
-
-.animate-error-in {
-  animation: error-in 200ms ease-out;
-}
-
-.animate-error-out {
-  animation: error-out 150ms ease-in;
-}
-
-/* Accent colour transition */
-.mos-app-shell *,
-.mos-app-shell *::before,
-.mos-app-shell *::after {
-  transition-property: background-color, border-color, color, outline-color, box-shadow;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
-}
-
-/* Chat animations */
-@keyframes dropdown-open {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes error-in {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 60px;
-  }
-}
-
-@keyframes error-out {
-  from {
-    opacity: 1;
-    max-height: 60px;
-  }
-  to {
-    opacity: 0;
-    max-height: 0;
-  }
-}
-
-@keyframes phase-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes banner-enter {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 80px;
-  }
-}
-
-@keyframes activation-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-phase-enter {
-  animation: phase-enter 250ms ease-out;
-}
-
-.animate-card-enter {
-  animation: card-enter 200ms ease-in-out;
-}
-
-.animate-banner-enter {
-  animation: banner-enter 200ms ease-out;
-}
-
-.animate-activation-enter {
-  animation: activation-enter 250ms ease-out 500ms both;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes expandIn {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-  }
-}
-
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
+    box-shadow: var(--shadow-lg);
   }
 }
 

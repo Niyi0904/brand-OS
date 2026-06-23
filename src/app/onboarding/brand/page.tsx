@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { createBrandAndStartOnboarding, type CreateBrandState } from "@/app/onboarding/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const INDUSTRIES = [
   "Fashion & Apparel",
@@ -45,18 +47,17 @@ export default function BrandPage() {
         <h1 className="text-[1.5rem] font-semibold text-[var(--color-text-primary)]">
           Let&apos;s set up your first client.
         </h1>
-        <p className="text-[0.9rem] text-[var(--color-text-secondary)] mt-2">
+        <p className="mt-2 text-[0.9rem] text-[var(--color-text-secondary)]">
           You can always edit this later — nothing is locked in.
         </p>
       </div>
 
       <form action={formAction} className="space-y-5">
-        {/* Brand name */}
         <div>
-          <label htmlFor="brandName" className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+          <label htmlFor="brandName" className="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]">
             What&apos;s the brand called?
           </label>
-          <input
+          <Input
             id="brandName"
             name="brandName"
             type="text"
@@ -65,23 +66,13 @@ export default function BrandPage() {
             onBlur={() => handleBlur("brandName")}
             placeholder="e.g. Nike NG, Bloom Studio, The Tea Bar"
             disabled={isPending}
-            className={`w-full h-11 px-3 rounded-lg text-sm outline-none transition-colors ${
-              getError("brandName")
-                ? "border border-[var(--color-red)]"
-                : "border border-[var(--color-border)] focus:border-[var(--brand-accent)]"
-            } bg-[var(--color-surface-2)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)]`}
+            error={getError("brandName")}
             style={{ caretColor: "var(--brand-accent)" }}
           />
-          {getError("brandName") && (
-            <p role="alert" className="text-[0.8125rem] text-[var(--color-red)] mt-1">
-              {getError("brandName")}
-            </p>
-          )}
         </div>
 
-        {/* Description */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+          <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]">
             What does this brand do?
           </label>
           <textarea
@@ -93,7 +84,7 @@ export default function BrandPage() {
             placeholder="e.g. A premium skincare brand for women over 40 in West Africa"
             rows={3}
             disabled={isPending}
-            className={`w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none transition-colors ${
+            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-colors resize-none ${
               getError("description")
                 ? "border border-[var(--color-red)]"
                 : "border border-[var(--color-border)] focus:border-[var(--brand-accent)]"
@@ -101,15 +92,14 @@ export default function BrandPage() {
             style={{ caretColor: "var(--brand-accent)" }}
           />
           {getError("description") && (
-            <p role="alert" className="text-[0.8125rem] text-[var(--color-red)] mt-1">
+            <p role="alert" className="mt-1 text-[0.8125rem] text-[var(--color-red)]">
               {getError("description")}
             </p>
           )}
         </div>
 
-        {/* Industry */}
         <div>
-          <label htmlFor="industry" className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+          <label htmlFor="industry" className="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]">
             What industry are they in?
           </label>
           <select
@@ -119,10 +109,10 @@ export default function BrandPage() {
             onChange={(e) => setIndustry(e.target.value)}
             onBlur={() => handleBlur("industry")}
             disabled={isPending}
-            className={`w-full h-11 px-3 rounded-lg text-sm outline-none transition-colors appearance-none ${
+            className={`w-full h-11 rounded-lg px-3 text-sm outline-none transition-colors appearance-none border ${
               getError("industry")
-                ? "border border-[var(--color-red)]"
-                : "border border-[var(--color-border)] focus:border-[var(--brand-accent)]"
+                ? "border-[var(--color-red)]"
+                : "border-[var(--color-border)] focus:border-[var(--brand-accent)]"
             } bg-[var(--color-surface-2)] text-[var(--color-text-primary)] ${
               !industry ? "text-[var(--color-text-tertiary)]" : ""
             }`}
@@ -140,36 +130,22 @@ export default function BrandPage() {
             ))}
           </select>
           {getError("industry") && (
-            <p role="alert" className="text-[0.8125rem] text-[var(--color-red)] mt-1">
+            <p role="alert" className="mt-1 text-[0.8125rem] text-[var(--color-red)]">
               {getError("industry")}
             </p>
           )}
         </div>
 
-        {/* CTA */}
-        <div className="pt-3 space-y-3">
-          <button
-            type="submit"
-            disabled={!allFilled || isPending}
-            className="w-full flex items-center justify-center gap-2 h-11 rounded-lg text-sm font-medium transition-all"
-            style={{
-              background: allFilled && !isPending ? "var(--brand-accent)" : "var(--color-surface-3)",
-              color: allFilled && !isPending ? "var(--color-bg)" : "var(--color-text-tertiary)",
-              cursor: allFilled && !isPending ? "pointer" : "not-allowed",
-            }}
-            aria-disabled={!allFilled || isPending}
-            aria-busy={isPending}
-          >
+        <div className="space-y-3 pt-3">
+          <Button type="submit" className="w-full" disabled={!allFilled || isPending}>
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Continue
-          </button>
+          </Button>
 
           <div className="text-center">
-            <span
-              className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-tertiary)] cursor-default"
-            >
+            <span className="inline-flex cursor-default items-center gap-1.5 text-sm text-[var(--color-text-tertiary)]">
               Import from a website instead
-              <span className="mos-pill text-[10px] px-1.5 py-0.5">Coming soon</span>
+              <span className="mos-pill rounded px-1.5 py-0.5 text-[10px]">Coming soon</span>
             </span>
           </div>
         </div>

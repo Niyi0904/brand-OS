@@ -118,7 +118,7 @@ export function ChatShell({
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[var(--color-bg)]">
+    <div className="flex h-dvh w-full overflow-hidden bg-[var(--color-bg)]">
       {/* Desktop history panel */}
       <div className="hidden md:flex">
         <HistoryPanel
@@ -173,7 +173,7 @@ export function ChatShell({
       {/* Main chat area */}
       <main className="flex flex-1 flex-col overflow-hidden">
         {/* Chat header */}
-        <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[rgba(8,9,15,0.78)] px-4 backdrop-blur-md sm:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -235,7 +235,7 @@ export function ChatShell({
 
         {/* Error state */}
         {error && (
-          <div className="mx-6 mt-4 rounded-lg border border-[rgba(255,138,138,0.22)] bg-[rgba(255,138,138,0.06)] p-4">
+          <div className="mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-[var(--color-red)]">{error}</span>
               <Button

@@ -1,8 +1,12 @@
+import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { serializeBrandForPrompt } from "@/lib/brand-context-serializer";
+import { Button } from "@/components/ui/button";
 import { SettingsForm } from "./settings-form";
 
 type SettingsPageProps = {
@@ -72,13 +76,11 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
       <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <a
-              href="/dashboard/brands"
-              className="mos-button-ghost inline-flex h-10 w-10 items-center justify-center rounded-lg"
-              aria-label="Back to brands"
-            >
-              ←
-            </a>
+            <Button variant="ghost" size="icon" asChild aria-label="Back to brands">
+              <Link href="/dashboard/brands">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
             <div>
               <div className="mos-pill mb-3 inline-flex rounded-full px-3 py-1 text-xs font-medium">
                 Brand Brain: {brand.name}

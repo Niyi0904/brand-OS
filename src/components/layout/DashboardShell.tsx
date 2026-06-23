@@ -8,22 +8,22 @@ import { BrandSwitchOverlay } from "@/components/layout/BrandSwitchOverlay";
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { currentBrand } = useBrand();
 
-  // Fire side-effects whenever the active brand changes
   useBrandSwitchEffects();
+
+  const accent = currentBrand?.accentColour || "#7c9cff";
+  const accentStrong = currentBrand?.accentColour
+    ? `${currentBrand.accentColour}cc`
+    : "#a6bdff";
 
   return (
     <div
       className="mos-app-shell min-h-screen"
       style={{
-        "--brand-accent": currentBrand?.accentColour || "#7c6ff7",
-        "--brand-accent-strong": currentBrand?.accentColour
-          ? `${currentBrand.accentColour}cc`
-          : "#c2d1ff",
+        "--brand-accent": accent,
+        "--brand-accent-strong": accentStrong,
       } as React.CSSProperties}
     >
       {children}
-
-      {/* Full-screen loading overlay during brand switch */}
       <BrandSwitchOverlay />
     </div>
   );

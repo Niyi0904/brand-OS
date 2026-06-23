@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHover, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +29,7 @@ export default async function BrandsPage() {
     : 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mos-pill mb-3 inline-flex rounded-full px-3 py-1 text-xs font-medium">
@@ -48,25 +48,41 @@ export default async function BrandsPage() {
         </Button>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <SummaryCard title="Brand Brains" value={`${brands.length}`} detail="All active" />
         <SummaryCard title="Average health" value={`${avgHealth}%`} detail="Brain completeness" />
         <SummaryCard title="AI ready" value="6 roles" detail="Using shared context" />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {brands.map((brand) => (
-          <BrandCard
-            key={brand.id}
-            id={brand.id}
-            name={brand.name}
-            slug={brand.slug}
-            description={brand.description}
-            brandBrain={brand.brandBrain}
-            healthScore={computeBrandBrainCompleteness(brand.brandBrain)}
-          />
-        ))}
-      </section>
+      {brands.length === 0 ? (
+        <div className="mos-card flex flex-col items-center gap-4 py-16 text-center">
+          <Building2 className="h-12 w-12 text-[var(--color-text-tertiary)]" />
+          <div>
+            <h3 className="text-lg font-semibold">No brands yet</h3>
+            <p className="mos-muted mt-1 text-sm">Create your first brand to start building Brand Brain context.</p>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/brands/new">
+              <Plus className="h-4 w-4" />
+              Create brand
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {brands.map((brand) => (
+            <BrandCard
+              key={brand.id}
+              id={brand.id}
+              name={brand.name}
+              slug={brand.slug}
+              description={brand.description}
+              brandBrain={brand.brandBrain}
+              healthScore={computeBrandBrainCompleteness(brand.brandBrain)}
+            />
+          ))}
+        </section>
+      )}
     </div>
   );
 }
@@ -82,7 +98,7 @@ type BrandCardData = {
 
 function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) {
   return (
-    <Card className="mos-card-hover">
+    <CardHover>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -101,7 +117,7 @@ function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem>
                 <Link href={`/dashboard/brands/${slug}/settings`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Brand Brain
@@ -115,15 +131,15 @@ function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) 
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <p className="mos-muted min-h-[48px] text-sm leading-6">{description || "No description yet"}</p>
+      <CardContent className="space-y-4">
+        <p className="mos-muted min-h-[40px] text-sm leading-6">{description || "No description yet"}</p>
 
-        <div className="mos-panel space-y-3 p-4">
+        <div className="mos-panel p-4">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="mos-muted">Health score</span>
             <span className="font-semibold">{healthScore}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
             <div className="h-full rounded-full bg-[var(--brand-accent)]" style={{ width: `${healthScore}%` }} />
           </div>
         </div>
@@ -141,7 +157,7 @@ function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) 
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </CardHover>
   );
 }
 

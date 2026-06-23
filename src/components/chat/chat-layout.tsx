@@ -59,7 +59,7 @@ export function ChatLayout({
   const displayMessages = messages.length > 0 ? messages : initialMessages;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[var(--color-bg)]">
+    <div className="flex h-dvh w-full overflow-hidden bg-[var(--color-bg)]">
       {/* Desktop history panel */}
       <aside
         className={`hidden md:flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-1)] transition-all duration-200 ${
@@ -117,7 +117,7 @@ export function ChatLayout({
           historyOpen={historyOpen}
         />
         {error && (
-          <div className="mx-6 mt-4 rounded-lg border border-[rgba(255,138,138,0.22)] bg-[rgba(255,138,138,0.06)] p-4">
+          <div className="mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
             <p className="text-sm text-[var(--color-red)]">{error}</p>
             <Button
               variant="outline"

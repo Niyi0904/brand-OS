@@ -64,57 +64,66 @@ export default function SignUpPage() {
           <CardContent className="space-y-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               {state?.message && !state.success ? (
-                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                  {state.message}
-                </div>
+                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">{state.message}</div>
               ) : null}
               {state?.message && state.success ? (
-                <div className="rounded-md bg-green-500/10 px-4 py-3 text-sm text-green-400">
-                  {state.message}
-                </div>
+                <div className="rounded-md bg-green-500/10 px-4 py-3 text-sm text-green-400">{state.message}</div>
               ) : null}
               {confirmError ? (
-                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                  {confirmError}
-                </div>
+                <div className="rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-400">{confirmError}</div>
               ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="name">Full name</Label>
-                <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="name" name="name" type="text" placeholder="Jane Doe" className="pl-10" required />
-                </div>
-                {state?.errors?.name ? (
-                  <p className="text-xs text-red-400">{state.errors.name[0]}</p>
-                ) : null}
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Jane Doe"
+                  startIcon={<User className="h-4 w-4" />}
+                  error={state?.errors?.name?.[0]}
+                  required
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="email" name="email" type="email" placeholder="name@example.com" className="pl-10" required />
-                </div>
-                {state?.errors?.email ? (
-                  <p className="text-xs text-red-400">{state.errors.email[0]}</p>
-                ) : null}
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  startIcon={<Mail className="h-4 w-4" />}
+                  error={state?.errors?.email?.[0]}
+                  required
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="password" name="password" type="password" placeholder="Password" className="pl-10" required />
-                </div>
-                {state?.errors?.password ? (
-                  <p className="text-xs text-red-400">{state.errors.password[0]}</p>
-                ) : null}
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  startIcon={<Lock className="h-4 w-4" />}
+                  error={state?.errors?.password?.[0]}
+                  required
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm password</Label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[var(--color-text-tertiary)]" />
-                  <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Password" className="pl-10" required />
-                </div>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Password"
+                  startIcon={<Lock className="h-4 w-4" />}
+                  required
+                />
               </div>
+
               <Button type="submit" className="w-full" disabled={pending}>
                 {pending ? "Creating account..." : "Create account"}
                 <ArrowRight className="h-4 w-4" />
