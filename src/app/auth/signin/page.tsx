@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowRight, Lock, Mail, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,15 @@ export default function SignInPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_440px] lg:items-center">
         <section className="hidden lg:block">
-          <div className="mos-pill mb-5 inline-flex rounded-full px-3 py-1 text-xs font-medium">
-            MarketingOS
+          <div className="mb-5">
+            <Image
+              src="/logo.png"
+              alt="MarketingOS"
+              width={55}
+              height={28}
+              priority
+              className="h-7 w-auto"
+            />
           </div>
           <h1 className="max-w-2xl text-5xl font-semibold leading-tight">
             Your AI marketing team starts with one shared source of brand truth.

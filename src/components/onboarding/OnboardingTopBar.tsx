@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { StepIndicator } from "@/components/onboarding/StepIndicator";
 import { exitOnboardingAction } from "@/app/onboarding/actions";
@@ -14,11 +14,15 @@ export function OnboardingTopBar({ onboardingStep }: OnboardingTopBarProps) {
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-[var(--color-border)] bg-transparent px-4 sm:px-6">
-      <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-        <div className="mos-icon-tile flex h-8 w-8 items-center justify-center rounded-lg">
-          <Sparkles className="h-4 w-4" />
-        </div>
-        <span className="text-sm font-semibold tracking-wide hidden sm:block">MarketingOS</span>
+      <Link href="/dashboard" className="flex items-center shrink-0">
+        <Image
+          src="/logo.png"
+          alt="MarketingOS"
+          width={47}
+          height={24}
+          priority
+          className="h-6 w-auto"
+        />
       </Link>
 
       <div className="hidden sm:flex">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Building2,
@@ -14,7 +15,6 @@ import {
   BookOpen,
   BarChart3,
   Settings,
-  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -43,11 +43,15 @@ export function DashboardHeader() {
     <>
       <header className="mos-topbar sticky top-0 z-20 border-b">
         <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-            <div className="mos-icon-tile flex h-9 w-9 items-center justify-center rounded-lg">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-semibold">MarketingOS</span>
+          <Link href="/dashboard" className="flex items-center lg:hidden">
+            <Image
+              src="/logo.png"
+              alt="MarketingOS"
+              width={47}
+              height={24}
+              priority
+              className="h-6 w-auto"
+            />
           </Link>
 
           <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
@@ -87,14 +91,16 @@ export function DashboardHeader() {
           <aside className="mos-sidebar absolute inset-y-0 left-0 z-50 flex w-[var(--sidebar-width)] flex-col border-r bg-[var(--color-surface-1)]">
             <div className="flex h-full flex-col p-5">
               <div className="mb-4 flex items-center justify-between">
-                <Link href="/dashboard" className="flex items-center gap-3 shrink-0">
-                  <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold tracking-wide">MarketingOS</div>
-                    <div className="mos-subtle text-xs">AI marketing command</div>
-                  </div>
+                <Link href="/dashboard" className="flex shrink-0 flex-col gap-0.5">
+                  <Image
+                    src="/logo.png"
+                    alt="MarketingOS"
+                    width={63}
+                    height={32}
+                    priority
+                    className="h-8 w-auto"
+                  />
+                  <div className="mos-subtle text-xs">AI marketing command</div>
                 </Link>
                 <button
                   type="button"

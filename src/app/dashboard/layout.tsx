@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -98,15 +99,16 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
       <SubscriptionGuard subscription={subscription}>
         <DashboardShell>
         <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">
-          <div className="flex h-full flex-col p-5">
-            <Link href="/dashboard" className="mb-6 flex items-center gap-3 shrink-0">
-              <div className="mos-icon-tile flex h-10 w-10 items-center justify-center rounded-lg">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold tracking-wide">MarketingOS</div>
-                <div className="mos-subtle text-xs">Brand & Marketing OS</div>
-              </div>
+          <div className="flex h-full flex-col px-5 py-2">
+            <Link href="/dashboard" className="flex shrink-0 flex-col gap-0.5">
+              <Image
+                src="/logo.png"
+                alt="MarketingOS"
+                width={180}
+                height={80}
+                style={{ height: 80, width: "auto", filter: "brightness(1.3)", opacity: 0.88 }}
+              />
+              
             </Link>
 
             <div className="mb-4">
