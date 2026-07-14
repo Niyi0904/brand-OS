@@ -2,6 +2,19 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Card — MOS design system
+   
+   Variants:
+   - Card         : default elevated card (static)
+   - CardHover    : card with hover lift animation
+   - CardHeader   : card header container
+   - CardTitle    : card headline
+   - CardDescription : card subtext
+   - CardContent  : main body area
+   - CardFooter   : footer row
+────────────────────────────────────────────────────────────────────────────── */
+
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -9,7 +22,16 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "mos-card",
+      // Warm elevated surface
+      "relative overflow-hidden",
+      "bg-[var(--surface-2)]",
+      "border border-[var(--border)]",
+      "rounded-[var(--radius-lg)]",
+      "shadow-[var(--shadow-sm)]",
+      "text-[var(--text-primary)]",
+      // Subtle top-edge highlight for elevation feel
+      "before:absolute before:inset-0 before:rounded-[inherit]",
+      "before:bg-gradient-to-b before:from-white/[0.032] before:to-transparent before:pointer-events-none",
       className
     )}
     {...props}
@@ -24,7 +46,20 @@ const CardHover = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "mos-card mos-card-hover",
+      "relative overflow-hidden",
+      "bg-[var(--surface-2)]",
+      "border border-[var(--border)]",
+      "rounded-[var(--radius-lg)]",
+      "shadow-[var(--shadow-sm)]",
+      "text-[var(--text-primary)]",
+      "before:absolute before:inset-0 before:rounded-[inherit]",
+      "before:bg-gradient-to-b before:from-white/[0.032] before:to-transparent before:pointer-events-none",
+      // Hover lift
+      "transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+      "will-change-transform",
+      "hover:border-[var(--border-strong)]",
+      "hover:-translate-y-px",
+      "hover:shadow-[var(--shadow-md)]",
       className
     )}
     {...props}
@@ -38,20 +73,22 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col space-y-1 p-5", className)}
     {...props}
   />
 ));
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
+  HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-tight text-[var(--color-text-primary)]",
+      "text-[var(--text-md,0.9375rem)] font-semibold leading-snug",
+      "tracking-[-0.015em]",
+      "text-[var(--text-primary)]",
       className
     )}
     {...props}
@@ -65,7 +102,11 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm leading-6 mos-muted", className)}
+    className={cn(
+      "text-[var(--text-xs,0.75rem)] leading-[1.5]",
+      "text-[var(--text-secondary)]",
+      className
+    )}
     {...props}
   />
 ));
@@ -75,7 +116,11 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div
+    ref={ref}
+    className={cn("px-5 pb-5", className)}
+    {...props}
+  />
 ));
 CardContent.displayName = "CardContent";
 
@@ -85,10 +130,22 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
+    className={cn(
+      "flex items-center px-5 pb-5",
+      "border-t border-[var(--border)] pt-4 mt-1",
+      className
+    )}
     {...props}
   />
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHover, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHover,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+};

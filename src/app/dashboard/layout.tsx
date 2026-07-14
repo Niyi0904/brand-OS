@@ -27,6 +27,7 @@ import { SubscriptionGuard } from "@/components/layout/SubscriptionGuard";
 import { BrandSwitcher } from "@/components/layout/BrandSwitcher";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { NavItem } from "@/components/layout/NavItem";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -98,102 +99,121 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
       <BrandProviderInitializer brands={brands} activeBrandId={activeBrandId} />
       <SubscriptionGuard subscription={subscription}>
         <DashboardShell>
-        <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] border-r lg:flex lg:flex-col">
-          <div className="flex h-full flex-col px-5 py-2">
-            <Link href="/dashboard" className="flex shrink-0 flex-col gap-0.5">
-              <Image
-                src="/logo.png"
-                alt="MarketingOS"
-                width={180}
-                height={80}
-                style={{ height: 80, width: "auto", filter: "brightness(1.3)", opacity: 0.88 }}
-              />
-              
-            </Link>
 
-            <div className="mb-4">
-              <BrandSwitcher />
-            </div>
+          {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+          <aside className="mos-sidebar fixed inset-y-0 left-0 z-30 hidden w-[var(--sidebar-width)] lg:flex lg:flex-col">
+            <div className="flex h-full flex-col">
 
-            <div className="flex-1 overflow-y-auto -mx-5 px-5">
-              <SidebarSection label="Workspace" items={primaryNavItems} />
-              <SidebarSection label="Intelligence" items={intelligenceNavItems} />
-              <SidebarSection label="System" items={systemNavItems} />
-            </div>
-
-            <div className="mt-auto space-y-4 shrink-0">
-              <div className="mos-panel p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="h-4 w-4 text-[var(--brand-accent-strong)]" />
-                  Brand Brain
-                </div>
-                <p className="mos-muted text-xs leading-5">
-                  Context quality improves every employee response. Keep brand strategy and voice data current.
-                </p>
+              {/* Logo area */}
+              <div className="flex h-[56px] shrink-0 items-center px-4 border-b border-[var(--border)]">
+                <Link href="/dashboard" className="flex items-center gap-2.5 group">
+                  <Image
+                    src="/logo.png"
+                    alt="MarketingOS"
+                    width={130}
+                    height={36}
+                    style={{
+                      height: 28,
+                      width: "auto",
+                      filter: "brightness(1.15)",
+                      opacity: 0.9,
+                    }}
+                    priority
+                  />
+                </Link>
               </div>
 
-              <Link
-                href="/dashboard/settings"
-                className="flex items-center gap-3 border-t pt-4 mos-divider transition-colors hover:opacity-80"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-3)]">
-                  {session.user?.image ? (
-                    <img src={session.user.image} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <User className="h-4 w-4 text-[var(--color-text-secondary)]" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{session.user?.name ?? "Marketing lead"}</p>
-                  <p className="mos-subtle truncate text-xs">{session.user?.email ?? "Signed in"}</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </aside>
+              {/* Brand Switcher */}
+              <div className="shrink-0">
+                <BrandSwitcher />
+              </div>
 
-        <div className="lg:pl-[var(--sidebar-width)]">
-          <DashboardHeader />
-          <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
-        </div>
-      </DashboardShell>
+              {/* Navigation */}
+              <div className="flex-1 overflow-y-auto py-4 px-3">
+                <SidebarSection label="Workspace" items={primaryNavItems} />
+                <SidebarSection label="Intelligence" items={intelligenceNavItems} />
+                <SidebarSection label="System" items={systemNavItems} />
+              </div>
+
+              {/* Brand Brain hint */}
+              <div className="shrink-0 mx-3 mb-3">
+                <div
+                  className="rounded-[var(--radius-md)] p-3.5"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(212,149,106,0.08), rgba(212,149,106,0.04))",
+                    border: "1px solid rgba(212,149,106,0.18)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Sparkles
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: "var(--accent)" }}
+                    />
+                    <span className="text-[0.75rem] font-semibold text-[var(--accent-strong)]">
+                      Brand Brain
+                    </span>
+                  </div>
+                  <p className="text-[0.7rem] leading-[1.5] text-[var(--text-tertiary)]">
+                    Keep your brand data current — every AI employee reads it automatically.
+                  </p>
+                </div>
+              </div>
+
+              {/* User footer */}
+              <div className="shrink-0 border-t border-[var(--border)] px-3 py-3">
+                <Link
+                  href="/dashboard/settings"
+                  className="flex items-center gap-3 rounded-[var(--radius-md)] p-2 transition-colors hover:bg-[var(--surface-3)] group"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--border-strong)] bg-[var(--surface-3)]">
+                    {session.user?.image ? (
+                      <img
+                        src={session.user.image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.8125rem] font-medium text-[var(--text-primary)] leading-none mb-0.5">
+                      {session.user?.name ?? "Marketing lead"}
+                    </p>
+                    <p className="truncate text-[0.6875rem] text-[var(--text-tertiary)]">
+                      {session.user?.email ?? "Signed in"}
+                    </p>
+                  </div>
+                </Link>
+              </div>
+
+            </div>
+          </aside>
+
+          {/* ── Main content ─────────────────────────────────────────────────── */}
+          <div className="lg:pl-[var(--sidebar-width)]">
+            <DashboardHeader />
+            <main className="relative z-[1] min-h-[calc(100vh-56px)] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+              {children}
+            </main>
+          </div>
+
+        </DashboardShell>
       </SubscriptionGuard>
     </BrandProvider>
   );
 }
 
+/* ── SidebarSection ──────────────────────────────────────────────────────── */
 function SidebarSection({ label, items }: { label: string; items: NavItemConfig[] }) {
   return (
-    <div className="mb-6">
-      <p className="mos-subtle mb-2 px-3 text-xs font-semibold uppercase tracking-[0.12em]">{label}</p>
+    <div className="mb-5">
+      <p className="mos-section-label mb-2">{label}</p>
       <nav className="space-y-0.5">
         {items.map((item) => (
           <NavItem key={item.href} item={item} />
         ))}
       </nav>
     </div>
-  );
-}
-
-function NavItem({ item }: { item: NavItemConfig }) {
-  return (
-    <Link
-      href={item.status === "Soon" ? "#" : item.href}
-      className={`group flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-        item.status === "Soon"
-          ? "text-[var(--color-text-tertiary)] cursor-not-allowed"
-          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)]"
-      }`}
-    >
-      <span className="flex h-5 w-5 items-center justify-center [&_svg]:h-4 [&_svg]:w-4 text-[var(--color-text-tertiary)] transition-colors group-hover:text-[var(--brand-accent-strong)]">
-        {item.icon}
-      </span>
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {item.status ? (
-        <span className="mos-subtle rounded-full border px-2 py-0.5 text-[10px] font-medium mos-divider">
-          {item.status}
-        </span>
-      ) : null}
-    </Link>
   );
 }

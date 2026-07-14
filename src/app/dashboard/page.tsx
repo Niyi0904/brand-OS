@@ -12,6 +12,8 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  Zap,
+  ChevronRight,
 } from "lucide-react";
 
 import { auth } from "@/lib/auth";
@@ -19,10 +21,20 @@ import { prisma } from "@/lib/db";
 import { getServerActiveBrandId } from "@/lib/brand-server";
 import { computeBrandBrainCompleteness } from "@/lib/brand-utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardHover, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardHover,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Data
+────────────────────────────────────────────────────────────────────────────── */
 async function getDashboardStats(userId: string, brandId: string | null) {
-  const brandFilter = brandId ? { brandId } : { brand: { userId } };
   const brandWhere = brandId ? { id: brandId, userId } : { userId };
 
   const [activeBrand, brandCount, campaignCount, conversationCount, brandBrains] = await Promise.all([
@@ -55,6 +67,9 @@ async function getDashboardStats(userId: string, brandId: string | null) {
   return { activeBrand, brandCount, campaignCount, conversationCount, avgCompleteness };
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Page
+────────────────────────────────────────────────────────────────────────────── */
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin");
@@ -62,206 +77,375 @@ export default async function DashboardPage() {
   const activeBrandId = await getServerActiveBrandId();
   const stats = await getDashboardStats(session.user.id, activeBrandId);
 
-  return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-      {/* Active-brand header */}
-      {stats.activeBrand ? (
-        <section className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-lg"
-            style={{
-              background: stats.activeBrand.accentColour
-                ? `${stats.activeBrand.accentColour}22`
-                : "var(--color-surface-3)",
-            }}
-          >
-            <Building2
-              className="h-5 w-5"
-              style={{ color: stats.activeBrand.accentColour ?? "var(--brand-accent)" }}
-            />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-              {stats.activeBrand.name}
-            </h2>
-            <p className="mos-muted text-xs">Active workspace</p>
-          </div>
-        </section>
-      ) : null}
+  const userName = session.user?.name?.split(" ")[0] ?? "there";
 
-      {/* Command center */}
-      <section className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-        <div className="mos-card overflow-hidden">
-          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_240px] lg:p-8">
+  return (
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-7">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <section className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-[1.5rem] font-semibold tracking-[-0.025em] text-[var(--text-primary)] leading-none mb-1">
+            {stats.activeBrand
+              ? `${stats.activeBrand.name}`
+              : `Good day, ${userName}`}
+          </h1>
+          <p className="text-[0.8125rem] text-[var(--text-secondary)]">
+            {stats.activeBrand
+              ? "Marketing command center"
+              : "Your marketing command center"}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/brands/new">
+              <Plus className="h-3.5 w-3.5" />
+              Add brand
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/dashboard/ai-employees">
+              <Sparkles className="h-3.5 w-3.5" />
+              Open AI team
+            </Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* ── Command center / stats ────────────────────────────────────────── */}
+      <section className="grid gap-5 lg:grid-cols-[1fr_280px]">
+
+        {/* Hero card */}
+        <div
+          className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] p-6 lg:p-8"
+          style={{
+            background: `
+              linear-gradient(135deg, rgba(212,149,106,0.06) 0%, transparent 50%),
+              linear-gradient(180deg, rgba(255,255,255,0.028) 0%, transparent 40%),
+              var(--surface-2)
+            `,
+            boxShadow: "var(--shadow-md)",
+          }}
+        >
+          {/* Subtle top-edge highlight */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[inherit]"
+            style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 30%)",
+            }}
+          />
+
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_200px]">
+
+            {/* Left: headline + actions */}
             <div>
-              <div className="mos-pill mb-5 inline-flex rounded-full px-3 py-1 text-xs font-medium">
+              <Badge variant="accent" className="mb-5">
+                <Zap className="h-2.5 w-2.5" />
                 Marketing command center
-              </div>
-              <h1 className="max-w-3xl text-2xl font-semibold leading-tight text-[var(--color-text-primary)] sm:text-3xl">
+              </Badge>
+              <h2 className="max-w-lg text-[1.5rem] font-semibold leading-[1.25] tracking-[-0.03em] text-[var(--text-primary)] sm:text-[1.875rem]">
                 {stats.activeBrand
                   ? `Running ${stats.activeBrand.name} with AI clarity.`
                   : "Run every brand with context, clarity, and AI employees."}
-              </h1>
-              <p className="mos-muted mt-4 max-w-xl text-sm leading-6">
+              </h2>
+              <p className="mt-3 max-w-md text-[0.875rem] leading-[1.65] text-[var(--text-secondary)]">
                 {stats.activeBrand
                   ? `Keep ${stats.activeBrand.name}'s Brand Brain current, route work to specialist AI employees, and track the next marketing moves.`
                   : "Keep Brand Brain data current, route work to the right specialist, and track the next moves from one focused workspace."}
               </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-wrap gap-2.5">
                 <Button asChild>
                   <Link href="/dashboard/ai-employees">
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-3.5 w-3.5" />
                     Open AI team
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/dashboard/brands/new">
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                     Add brand
                   </Link>
                 </Button>
               </div>
             </div>
 
-            <div className="mos-panel flex flex-col justify-between p-5">
-              <div>
-                <p className="mos-subtle text-xs font-semibold uppercase tracking-[0.12em]">
-                  {stats.activeBrand ? "Brand readiness" : "Workspace readiness"}
-                </p>
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-4xl font-semibold">{stats.avgCompleteness}</span>
-                  <span className="mos-muted mb-1 text-sm">/100</span>
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-                  <div
-                    className="h-full rounded-full bg-[var(--brand-accent)]"
-                    style={{ width: `${stats.avgCompleteness}%` }}
-                  />
-                </div>
+            {/* Right: readiness panel */}
+            <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-3)] p-5">
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.10em] text-[var(--text-tertiary)]">
+                {stats.activeBrand ? "Brand readiness" : "Workspace readiness"}
+              </p>
+              <div className="mt-4 flex items-baseline gap-1.5">
+                <span
+                  className="text-[2.5rem] font-semibold leading-none tracking-[-0.04em] text-[var(--text-primary)]"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {stats.avgCompleteness}
+                </span>
+                <span className="text-[0.875rem] text-[var(--text-tertiary)] mb-0.5">/100</span>
               </div>
-              <div className="mt-5 space-y-3">
-                <ReadinessRow label="Brands" value={`${stats.brandCount} active`} />
-                <ReadinessRow label="Campaigns" value={`${stats.campaignCount} running`} />
-                <ReadinessRow label="AI sessions" value={`${stats.conversationCount} total`} />
+
+              {/* Progress bar */}
+              <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-[var(--surface-4)]">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${stats.avgCompleteness}%`,
+                    background: "linear-gradient(90deg, var(--accent), var(--accent-strong))",
+                  }}
+                />
+              </div>
+
+              <div className="mt-5 space-y-2.5">
+                <ReadinessRow label="Brands" value={`${stats.brandCount}`} suffix="active" />
+                <ReadinessRow label="Campaigns" value={`${stats.campaignCount}`} suffix="running" />
+                <ReadinessRow label="AI sessions" value={`${stats.conversationCount}`} suffix="total" />
               </div>
             </div>
           </div>
         </div>
 
+        {/* Today's priorities */}
         <Card>
           <CardHeader>
-            <CardTitle>Today's priorities</CardTitle>
+            <CardTitle>Today&apos;s priorities</CardTitle>
             <CardDescription>High-signal work for the next operating cycle.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <PriorityItem icon={<Target />} title="Finalize campaign brief" meta="Due today" />
-            <PriorityItem icon={<MessageSquare />} title="Review AI content draft" meta="3 pending" />
-            <PriorityItem icon={<BarChart3 />} title="Check weekly growth trend" meta="Track progress" />
+          <CardContent className="space-y-2">
+            <PriorityItem
+              icon={<Target />}
+              title="Finalize campaign brief"
+              meta="Due today"
+              color="var(--accent)"
+            />
+            <PriorityItem
+              icon={<MessageSquare />}
+              title="Review AI content draft"
+              meta="3 pending"
+              color="var(--ai-action)"
+            />
+            <PriorityItem
+              icon={<BarChart3 />}
+              title="Check weekly growth trend"
+              meta="Track progress"
+              color="var(--positive)"
+            />
           </CardContent>
         </Card>
       </section>
 
-      {/* Stat cards */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Active Campaigns" value={`${stats.campaignCount}`} change="Real-time" icon={<Target />} />
-        <StatCard title="Brands" value={`${stats.brandCount}`} change="In workspace" icon={<Building2 />} />
-        <StatCard title="AI Generations" value={`${stats.conversationCount}`} change="Total sessions" icon={<Sparkles />} />
-        <StatCard title="Brand Health" value={`${stats.avgCompleteness}%`} change="Avg completeness" icon={<TrendingUp />} />
+      {/* ── Stat cards ───────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard
+          title="Campaigns"
+          value={String(stats.campaignCount)}
+          label="Active"
+          icon={<Target />}
+          color="var(--accent)"
+        />
+        <StatCard
+          title="Brands"
+          value={String(stats.brandCount)}
+          label="In workspace"
+          icon={<Building2 />}
+          color="var(--positive)"
+        />
+        <StatCard
+          title="AI Sessions"
+          value={String(stats.conversationCount)}
+          label="Total"
+          icon={<Sparkles />}
+          color="var(--ai-action)"
+        />
+        <StatCard
+          title="Brand Health"
+          value={`${stats.avgCompleteness}%`}
+          label="Avg completeness"
+          icon={<TrendingUp />}
+          color="var(--warning)"
+        />
       </section>
 
-      {/* Quick actions */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <QuickActionCard
-          title="Campaign brief"
-          description="Turn a business objective into a structured campaign plan."
-          icon={<Target />}
-          href="/dashboard/ai-employees"
-          signal="Strategy"
-        />
-        <QuickActionCard
-          title="AI employee room"
-          description="Ask specialist AI employees to produce brand-aware work."
-          icon={<Sparkles />}
-          href="/dashboard/ai-employees"
-          signal="Execution"
-        />
-        <QuickActionCard
-          title="Content planner"
-          description="Plan the next cycle of publish-ready assets and campaigns."
-          icon={<Calendar />}
-          href="/dashboard/ai-employees"
-          signal="Scheduling"
-        />
+      {/* ── Quick actions ────────────────────────────────────────────────── */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+            Quick actions
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <QuickActionCard
+            title="Campaign brief"
+            description="Turn a business objective into a structured campaign plan with AI."
+            icon={<Target />}
+            href="/dashboard/ai-employees"
+            label="Strategy"
+            color="var(--accent)"
+          />
+          <QuickActionCard
+            title="AI employee room"
+            description="Ask specialist AI employees to produce brand-aware work."
+            icon={<Bot />}
+            href="/dashboard/ai-employees"
+            label="Execution"
+            color="var(--ai-action)"
+          />
+          <QuickActionCard
+            title="Content planner"
+            description="Plan the next cycle of publish-ready assets and campaigns."
+            icon={<Calendar />}
+            href="/dashboard/ai-employees"
+            label="Scheduling"
+            color="var(--positive)"
+          />
+        </div>
       </section>
+
     </div>
   );
 }
 
-function StatCard({ title, value, change, icon }: { title: string; value: string; change: string; icon: ReactNode }) {
-  return (
-    <CardHover>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="mos-icon-tile flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4">
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-semibold">{value}</div>
-        <p className="mos-muted mt-2 flex items-center gap-1 text-xs">
-          <ArrowUpRight className="h-3.5 w-3.5 text-[var(--color-positive)]" />
-          {change}
-        </p>
-      </CardContent>
-    </CardHover>
-  );
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   Sub-components
+────────────────────────────────────────────────────────────────────────────── */
 
-function QuickActionCard({ title, description, icon, href, signal }: { title: string; description: string; icon: ReactNode; href: string; signal: string }) {
+function StatCard({
+  title,
+  value,
+  label,
+  icon,
+  color,
+}: {
+  title: string;
+  value: string;
+  label: string;
+  icon: ReactNode;
+  color: string;
+}) {
   return (
     <CardHover>
-      <CardHeader>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="mos-icon-tile flex h-11 w-11 items-center justify-center rounded-lg [&_svg]:h-5 [&_svg]:w-5">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[0.75rem] font-medium text-[var(--text-secondary)]">{title}</p>
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] [&_svg]:h-3.5 [&_svg]:w-3.5"
+            style={{
+              background: `${color}18`,
+              border: `1px solid ${color}30`,
+              color,
+            }}
+          >
             {icon}
           </div>
-          <span className="mos-subtle text-xs font-medium">{signal}</span>
         </div>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button variant="outline" className="w-full" asChild>
-          <Link href={href}>
-            Open workflow
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </Button>
+      <CardContent className="pb-5">
+        <div
+          className="text-[2rem] font-semibold leading-none tracking-[-0.04em]"
+          style={{ fontVariantNumeric: "tabular-nums" }}
+        >
+          {value}
+        </div>
+        <p className="mt-1.5 text-[0.6875rem] text-[var(--text-tertiary)]">{label}</p>
       </CardContent>
     </CardHover>
   );
 }
 
-function PriorityItem({ icon, title, meta }: { icon: ReactNode; title: string; meta: string }) {
+function QuickActionCard({
+  title,
+  description,
+  icon,
+  href,
+  label,
+  color,
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  href: string;
+  label: string;
+  color: string;
+}) {
   return (
-    <div className="mos-panel flex items-center gap-3 p-3">
-      <div className="mos-icon-tile flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4">
+    <CardHover className="group cursor-pointer">
+      <Link href={href} className="block h-full">
+        <CardHeader>
+          <div className="mb-4 flex items-center justify-between">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] [&_svg]:h-4.5 [&_svg]:w-4.5 [&_svg]:h-[18px] [&_svg]:w-[18px]"
+              style={{
+                background: `${color}14`,
+                border: `1px solid ${color}28`,
+                color,
+              }}
+            >
+              {icon}
+            </div>
+            <span className="text-[0.6875rem] font-medium text-[var(--text-tertiary)]">{label}</span>
+          </div>
+          <CardTitle className="text-[0.9375rem]">{title}</CardTitle>
+          <CardDescription className="mt-1 leading-[1.55]">{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-1.5 text-[0.8125rem] font-medium text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]">
+            Open workflow
+            <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </CardContent>
+      </Link>
+    </CardHover>
+  );
+}
+
+function PriorityItem({
+  icon,
+  title,
+  meta,
+  color,
+}: {
+  icon: ReactNode;
+  title: string;
+  meta: string;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-[var(--radius-md)] p-2.5 transition-colors hover:bg-[var(--surface-3)]">
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] [&_svg]:h-3.5 [&_svg]:w-3.5"
+        style={{
+          background: `${color}14`,
+          border: `1px solid ${color}28`,
+          color,
+        }}
+      >
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
-        <p className="mos-subtle text-xs">{meta}</p>
+        <p className="truncate text-[0.8125rem] font-medium text-[var(--text-primary)]">{title}</p>
+        <p className="text-[0.6875rem] text-[var(--text-tertiary)]">{meta}</p>
       </div>
-      <ArrowUpRight className="h-4 w-4 text-[var(--color-positive)]" />
+      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--text-tertiary)]" />
     </div>
   );
 }
 
-function ReadinessRow({ label, value }: { label: string; value: string }) {
+function ReadinessRow({
+  label,
+  value,
+  suffix,
+}: {
+  label: string;
+  value: string;
+  suffix: string;
+}) {
   return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="mos-muted">{label}</span>
-      <span className="mos-success-pill rounded-full px-2 py-0.5 text-xs">{value}</span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[0.75rem] text-[var(--text-secondary)]">{label}</span>
+      <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>{value}</span>
+        <span className="ml-1 text-[var(--text-tertiary)] font-normal">{suffix}</span>
+      </span>
     </div>
   );
 }
