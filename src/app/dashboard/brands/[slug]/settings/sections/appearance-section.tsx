@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
+import { FieldError } from "@/components/ui/field-error";
 
 const PRESET_COLORS = [
   "#7c6ff7",
@@ -19,17 +20,17 @@ const PRESET_COLORS = [
 ];
 
 interface AppearanceSectionProps {
-  slug: string;
   accentColour: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
-export function AppearanceSection({ slug, accentColour }: AppearanceSectionProps) {
+export function AppearanceSection({ accentColour, onFieldChange, errors }: AppearanceSectionProps) {
   const [selected, setSelected] = useState(accentColour || "#7c6ff7");
 
   const handleSelect = (color: string) => {
     setSelected(color);
-    const input = document.getElementById("accentColour") as HTMLInputElement | null;
-    if (input) input.value = color;
+    onFieldChange("accentColour", color);
   };
 
   return (
@@ -38,6 +39,8 @@ export function AppearanceSection({ slug, accentColour }: AppearanceSectionProps
       subtext="Choose an accent colour for this brand. It appears in the sidebar, buttons, and highlights."
       completionState={selected !== "#7c6ff7" ? "complete" : "empty"}
     >
+      {/* Controlled hidden input — this is what FormData reads on submit */}
+      <input type="hidden" name="accentColour" value={selected} />
       <div className="space-y-4">
         {/* Preset swatches */}
         <div className="flex flex-wrap gap-3">
@@ -62,12 +65,11 @@ export function AppearanceSection({ slug, accentColour }: AppearanceSectionProps
         {/* Custom color picker */}
         <div className="flex items-center gap-3">
           <label
-            htmlFor="accentColour"
+            htmlFor="accentColourPicker"
             className="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-[var(--color-border)]"
           >
             <input
-              id="accentColour"
-              name="accentColour"
+              id="accentColourPicker"
               type="color"
               value={selected}
               onChange={(e) => handleSelect(e.target.value)}
@@ -95,6 +97,8 @@ export function AppearanceSection({ slug, accentColour }: AppearanceSectionProps
           <div className="h-3 w-3 rounded-full" style={{ backgroundColor: selected }} />
           <span>Preview</span>
         </div>
+
+        <FieldError messages={errors?.accentColour} />
       </div>
     </SectionWrapper>
   );

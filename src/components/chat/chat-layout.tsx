@@ -108,7 +108,7 @@ export function ChatLayout({
       )}
 
       {/* Main content */}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col min-h-0">
         <ChatHeader
           employee={employee}
           brand={brand}
@@ -117,7 +117,7 @@ export function ChatLayout({
           historyOpen={historyOpen}
         />
         {error && (
-          <div className="mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
+          <div className="shrink-0 mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
             <p className="text-sm text-[var(--color-red)]">{error}</p>
             <Button
               variant="outline"
@@ -135,14 +135,16 @@ export function ChatLayout({
           brand={brand}
           isStreaming={isStreaming}
         />
-        <ChatInput
-          employeeId={employee.id}
-          brandId={brand.id}
-          conversationId={activeConversationId}
-          placeholder={`Message ${employee.name}...`}
-          onSend={sendMessage}
-          disabled={isStreaming}
-        />
+        <div className="shrink-0">
+          <ChatInput
+            employeeId={employee.id}
+            brandId={brand.id}
+            conversationId={activeConversationId}
+            placeholder={`Message ${employee.name}...`}
+            onSend={sendMessage}
+            disabled={isStreaming}
+          />
+        </div>
       </main>
     </div>
   );

@@ -62,7 +62,7 @@ export function ChatInput({
   const showCounter = charCount >= WARN_CHARS;
 
   return (
-    <div className="border-t border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+    <div className="relative z-[var(--z-sticky)] border-t border-[var(--color-border)] bg-[var(--color-bg)] p-4">
       <div className="mx-auto max-w-[860px]">
         <div className="relative flex items-end gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 transition-colors focus-within:border-[var(--brand-accent)]">
           <textarea

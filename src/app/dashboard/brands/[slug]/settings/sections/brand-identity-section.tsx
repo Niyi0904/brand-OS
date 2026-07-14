@@ -1,28 +1,29 @@
 "use client";
 
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
+import { FieldError } from "@/components/ui/field-error";
+import { cn } from "@/lib/utils";
 
 interface BrandIdentitySectionProps {
-  slug: string;
   brandName: string;
   tagline: string;
   websiteUrl: string;
   industry: string;
   foundedYear: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function BrandIdentitySection({
-  slug,
   brandName,
   tagline,
   websiteUrl,
   industry,
   foundedYear,
+  onFieldChange,
+  errors,
 }: BrandIdentitySectionProps) {
-  const { saveState, save } = useSectionAutoSave("brand-identity", slug);
-
   return (
     <SectionWrapper
       title="Brand identity"
@@ -45,15 +46,14 @@ export function BrandIdentitySection({
             name="brandName"
             type="text"
             defaultValue={brandName}
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("brandName", e.target.value);
-              save(fd);
-            }}
-            className="mos-input h-10 w-full rounded-md px-3 text-sm transition-[border-color] duration-150 focus-visible:border-[var(--brand-accent)] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent)]"
+            onBlur={(e) => onFieldChange("brandName", e.target.value)}
+            className={cn(
+              "mos-input h-10 w-full rounded-md px-3 text-sm transition-[border-color] duration-150 focus-visible:border-[var(--brand-accent)] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent)]",
+              errors?.brandName && "border-[var(--color-danger)]"
+            )}
             aria-required="true"
           />
+          <FieldError messages={errors?.brandName} />
         </div>
 
         <div className="space-y-2">
@@ -65,13 +65,9 @@ export function BrandIdentitySection({
             name="tagline"
             defaultValue={tagline}
             placeholder="e.g. We help small businesses compete with bigger ones by giving them better tools."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("tagline", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("tagline", e.target.value)}
           />
+          <FieldError messages={errors?.tagline} />
         </div>
 
         <div className="space-y-2">
@@ -84,14 +80,10 @@ export function BrandIdentitySection({
             type="url"
             defaultValue={websiteUrl}
             placeholder="https://example.com"
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("websiteUrl", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("websiteUrl", e.target.value)}
             className="mos-input h-10 w-full rounded-md px-3 text-sm transition-[border-color] duration-150 focus-visible:border-[var(--brand-accent)] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent)]"
           />
+          <FieldError messages={errors?.websiteUrl} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -103,12 +95,7 @@ export function BrandIdentitySection({
               id="industry"
               name="industry"
               defaultValue={industry}
-              onBlur={(e) => {
-                const fd = new FormData();
-                fd.set("slug", slug);
-                fd.set("industry", e.target.value);
-                save(fd);
-              }}
+              onBlur={(e) => onFieldChange("industry", e.target.value)}
               className="mos-input h-10 w-full rounded-md px-3 text-sm transition-[border-color] duration-150 focus-visible:border-[var(--brand-accent)] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent)]"
             >
               <option value="">Select industry</option>
@@ -121,6 +108,7 @@ export function BrandIdentitySection({
               <option value="Professional Services">Professional Services</option>
               <option value="Other">Other</option>
             </select>
+            <FieldError messages={errors?.industry} />
           </div>
 
           <div className="space-y-2">
@@ -135,14 +123,10 @@ export function BrandIdentitySection({
               max={new Date().getFullYear()}
               defaultValue={foundedYear}
               placeholder="2020"
-              onBlur={(e) => {
-                const fd = new FormData();
-                fd.set("slug", slug);
-                fd.set("foundedYear", e.target.value);
-                save(fd);
-              }}
+              onBlur={(e) => onFieldChange("foundedYear", e.target.value)}
               className="mos-input h-10 w-full rounded-md px-3 text-sm transition-[border-color] duration-150 focus-visible:border-[var(--brand-accent)] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-accent)]"
             />
+            <FieldError messages={errors?.foundedYear} />
           </div>
         </div>
       </div>

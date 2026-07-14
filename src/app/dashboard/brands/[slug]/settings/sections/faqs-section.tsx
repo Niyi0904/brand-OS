@@ -1,31 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { RepeatingRow, type RowData } from "@/components/ui/repeating-row";
+import { FieldError } from "@/components/ui/field-error";
 
 interface FaqsSectionProps {
-  slug: string;
   faqList: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
+
+type RawFaq = { question?: string; answer?: string } | string;
 
 function parseFaqs(raw: string): RowData[] {
   try {
-    const arr = JSON.parse(raw || "[]");
-    return arr.map((f: any, i: number) => ({
+    const arr = JSON.parse(raw || "[]") as RawFaq[];
+    return arr.map((f, i) => ({
       id: `faq-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      question: typeof f === "string" ? f : f.question || "",
-      answer: typeof f === "string" ? "" : f.answer || "",
+      question: typeof f === "string" ? f : (f.question ?? ""),
+      answer: typeof f === "string" ? "" : (f.answer ?? ""),
     }));
   } catch {
     return [];
   }
 }
 
-export function FaqsSection({ slug, faqList }: FaqsSectionProps) {
-  const { save } = useSectionAutoSave("faqs", slug);
-
+export function FaqsSection({ faqList, onFieldChange, errors }: FaqsSectionProps) {
   // Local state so "Add another" works immediately
   // ALWAYS show at least one empty row so input fields are visible
   const [localFaqs, setLocalFaqs] = useState<RowData[]>(() => {
@@ -38,10 +39,7 @@ export function FaqsSection({ slug, faqList }: FaqsSectionProps) {
 
   const handleFaqsChange = (rows: RowData[]) => {
     setLocalFaqs(rows);
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("faqList", JSON.stringify(rows.map((r) => ({ question: r.question, answer: r.answer }))));
-    save(fd);
+    onFieldChange("faqList", JSON.stringify(rows.map((r) => ({ question: r.question, answer: r.answer }))));
   };
 
   return (
@@ -62,6 +60,12 @@ export function FaqsSection({ slug, faqList }: FaqsSectionProps) {
           ]}
           itemLabel="faq"
         />
+        <input
+          type="hidden"
+          name="faqList"
+          value={JSON.stringify(localFaqs.map((r) => ({ question: r.question, answer: r.answer })))}
+        />
+        <FieldError messages={errors?.faqList} />
       </div>
     </SectionWrapper>
   );

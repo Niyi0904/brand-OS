@@ -1,32 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { TagInput } from "@/components/ui/tag-input";
+import { FieldError } from "@/components/ui/field-error";
 
 interface MissionValuesSectionProps {
-  slug: string;
   missionStatement: string;
   coreValues: string;
   brandPromise: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function MissionValuesSection({
-  slug,
   missionStatement,
   coreValues,
   brandPromise,
+  onFieldChange,
+  errors,
 }: MissionValuesSectionProps) {
-  const { save } = useSectionAutoSave("mission-values", slug);
-
-  // Local state for tags so UI updates immediately (not waiting for API)
+  // Local state for tags so UI updates immediately (not waiting for save)
   const [localValues, setLocalValues] = useState<string[]>(() => {
     try { return JSON.parse(coreValues || "[]"); } catch { return []; }
   });
 
-  // Sync from props when API save completes
+  // Sync from props when server data changes (after save + revalidation)
   useEffect(() => {
     try {
       const parsed = JSON.parse(coreValues || "[]");
@@ -35,11 +35,8 @@ export function MissionValuesSection({
   }, [coreValues]);
 
   const handleValueTagsChange = (tags: string[]) => {
-    setLocalValues(tags); // update UI immediately
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("coreValues", JSON.stringify(tags));
-    save(fd); // fire save in background
+    setLocalValues(tags);
+    onFieldChange("coreValues", JSON.stringify(tags));
   };
 
   return (
@@ -63,14 +60,10 @@ export function MissionValuesSection({
             id="missionStatement"
             name="missionStatement"
             defaultValue={missionStatement}
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("missionStatement", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("missionStatement", e.target.value)}
             placeholder="e.g. We help small businesses compete with bigger ones by giving them better tools."
           />
+          <FieldError messages={errors?.missionStatement} />
         </div>
 
         <div className="space-y-2">
@@ -83,6 +76,8 @@ export function MissionValuesSection({
             maxTags={5}
             placeholder="e.g. Transparency, Customer-first, Innovation"
           />
+          <input type="hidden" name="coreValues" value={JSON.stringify(localValues)} />
+          <FieldError messages={errors?.coreValues} />
         </div>
 
         <div className="space-y-2">
@@ -94,13 +89,9 @@ export function MissionValuesSection({
             name="brandPromise"
             defaultValue={brandPromise}
             placeholder="What the brand guarantees to every customer."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("brandPromise", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("brandPromise", e.target.value)}
           />
+          <FieldError messages={errors?.brandPromise} />
         </div>
       </div>
     </SectionWrapper>

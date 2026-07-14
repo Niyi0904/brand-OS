@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { RepeatingRow, type RowData } from "@/components/ui/repeating-row";
+import { FieldError } from "@/components/ui/field-error";
 
 interface ProductsServicesSectionProps {
-  slug: string;
   productList: string;
   pricingTier: string;
   keyDifferentiators: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
+
+type RawProduct = { name?: string; oneLiner?: string } | string;
 
 function parseProducts(raw: string): RowData[] {
   try {
-    const arr = JSON.parse(raw || "[]");
-    return arr.map((p: any, i: number) => ({
+    const arr = JSON.parse(raw || "[]") as RawProduct[];
+    return arr.map((p, i) => ({
       id: `product-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name: typeof p === "string" ? p : p.name || "",
-      oneLiner: typeof p === "string" ? "" : p.oneLiner || "",
+      name: typeof p === "string" ? p : (p.name ?? ""),
+      oneLiner: typeof p === "string" ? "" : (p.oneLiner ?? ""),
     }));
   } catch {
     return [];
@@ -27,13 +30,12 @@ function parseProducts(raw: string): RowData[] {
 }
 
 export function ProductsServicesSection({
-  slug,
   productList,
   pricingTier,
   keyDifferentiators,
+  onFieldChange,
+  errors,
 }: ProductsServicesSectionProps) {
-  const { save } = useSectionAutoSave("products-services", slug);
-
   // Local state so "Add another" works immediately
   // ALWAYS show at least one empty row so input fields are visible
   const [localProducts, setLocalProducts] = useState<RowData[]>(() => {
@@ -46,10 +48,7 @@ export function ProductsServicesSection({
 
   const handleProductsChange = (rows: RowData[]) => {
     setLocalProducts(rows);
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("productList", JSON.stringify(rows.map((r) => ({ name: r.name, oneLiner: r.oneLiner }))));
-    save(fd);
+    onFieldChange("productList", JSON.stringify(rows.map((r) => ({ name: r.name, oneLiner: r.oneLiner }))));
   };
 
   return (
@@ -77,6 +76,12 @@ export function ProductsServicesSection({
             ]}
             itemLabel="product"
           />
+          <input
+            type="hidden"
+            name="productList"
+            value={JSON.stringify(localProducts.map((r) => ({ name: r.name, oneLiner: r.oneLiner })))}
+          />
+          <FieldError messages={errors?.productList} />
         </div>
 
         <div className="space-y-2">
@@ -88,13 +93,9 @@ export function ProductsServicesSection({
             name="pricingTier"
             defaultValue={pricingTier}
             placeholder="Entry point, mid-tier, premium. Price anchors help the AI write accurately."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("pricingTier", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("pricingTier", e.target.value)}
           />
+          <FieldError messages={errors?.pricingTier} />
         </div>
 
         <div className="space-y-2">
@@ -106,13 +107,9 @@ export function ProductsServicesSection({
             name="keyDifferentiators"
             defaultValue={keyDifferentiators}
             placeholder="What makes this brand's offering different from competitors."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("keyDifferentiators", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("keyDifferentiators", e.target.value)}
           />
+          <FieldError messages={errors?.keyDifferentiators} />
         </div>
       </div>
     </SectionWrapper>

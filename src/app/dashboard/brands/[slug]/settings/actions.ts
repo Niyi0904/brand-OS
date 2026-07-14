@@ -72,38 +72,34 @@ export async function updateBrandBrainAction(
   }
 
   // Convert foundedYear from string to number for Prisma Int field
+  // Guard against the string "null" from stale clients (pre-fix 3.1)
   const { foundedYear, ...restData } = parsed.data;
   const updateData: Record<string, unknown> = { ...restData };
-  if (foundedYear) {
-    const year = parseInt(foundedYear, 10);
-    updateData.foundedYear = isNaN(year) ? null : year;
-  } else {
-    updateData.foundedYear = null;
-  }
+  const yearStr = foundedYear as string | null;
+  updateData.foundedYear =
+    yearStr && yearStr !== "" && yearStr !== "null"
+      ? (parseInt(yearStr, 10) || null)
+      : null;
 
   // Also update brand name from the form if provided
   const brandName = formData.get("brandName") as string | null;
   const accentColour = formData.get("accentColour") as string | null;
-  const brandUpdateData: Record<string, unknown> = {};
-  if (brandName) {
-    brandUpdateData.name = brandName;
-  }
-  brandUpdateData.logo = logo ?? undefined;
-  brandUpdateData.accentColour = accentColour && accentColour.trim() ? accentColour : null;
 
-  await prisma.brand.update({
-    where: { id: brand.id },
-    data: {
-      ...brandUpdateData,
-      brandBrain: {
-        upsert: {
-          where: { brandId: brand.id },
-          update: updateData,
-          create: updateData,
-        },
+  await prisma.$transaction([
+    prisma.brand.update({
+      where: { id: brand.id },
+      data: {
+        name: brandName ? brandName : undefined,
+        logo: logo ?? undefined,
+        accentColour: accentColour && accentColour.trim() ? accentColour : null,
       },
-    },
-  });
+    }),
+    prisma.brandBrain.upsert({
+      where: { brandId: brand.id },
+      update: updateData,
+      create: { brandId: brand.id, ...updateData },
+    }),
+  ]);
 
   revalidatePath(`/dashboard/brands/${slug}/settings`);
   revalidatePath("/dashboard", "layout");

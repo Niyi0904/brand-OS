@@ -65,6 +65,14 @@
     --input: 0 0% 100%;
     --ring: 226 100% 74%;
     --radius: 0.5rem;
+
+    /* Z-index layers */
+    --z-base: 0;
+    --z-messages: 10;
+    --z-sticky: 20;
+    --z-overlay: 40;
+    --z-dialog: 50;
+    --z-toast: 60;
   }
 
   * {

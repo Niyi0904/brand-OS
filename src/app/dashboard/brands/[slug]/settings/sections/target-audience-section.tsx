@@ -1,26 +1,26 @@
 "use client";
 
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
+import { FieldError } from "@/components/ui/field-error";
 
 interface TargetAudienceSectionProps {
-  slug: string;
   primaryAudience: string;
   audienceDemographics: string;
   audiencePainPoints: string;
   audienceVocabulary: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function TargetAudienceSection({
-  slug,
   primaryAudience,
   audienceDemographics,
   audiencePainPoints,
   audienceVocabulary,
+  onFieldChange,
+  errors,
 }: TargetAudienceSectionProps) {
-  const { save } = useSectionAutoSave("target-audience", slug);
-
   return (
     <SectionWrapper
       title="Target audience"
@@ -43,13 +43,9 @@ export function TargetAudienceSection({
             name="primaryAudience"
             defaultValue={primaryAudience}
             placeholder="e.g. Female founders, 28–42, UK-based, running product businesses with 1–10 employees."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("primaryAudience", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("primaryAudience", e.target.value)}
           />
+          <FieldError messages={errors?.primaryAudience} />
         </div>
 
         <div className="space-y-2">
@@ -61,13 +57,9 @@ export function TargetAudienceSection({
             name="audienceDemographics"
             defaultValue={audienceDemographics}
             placeholder="Age ranges, locations, income levels, job titles."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("audienceDemographics", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("audienceDemographics", e.target.value)}
           />
+          <FieldError messages={errors?.audienceDemographics} />
         </div>
 
         <div className="space-y-2">
@@ -79,13 +71,9 @@ export function TargetAudienceSection({
             name="audiencePainPoints"
             defaultValue={audiencePainPoints}
             placeholder="What keeps them up at night. What they're struggling with."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("audiencePainPoints", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("audiencePainPoints", e.target.value)}
           />
+          <FieldError messages={errors?.audiencePainPoints} />
         </div>
 
         <div className="space-y-2">
@@ -97,13 +85,9 @@ export function TargetAudienceSection({
             name="audienceVocabulary"
             defaultValue={audienceVocabulary}
             placeholder="Terms they use, jargon they know, phrases that resonate."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("audienceVocabulary", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("audienceVocabulary", e.target.value)}
           />
+          <FieldError messages={errors?.audienceVocabulary} />
         </div>
       </div>
     </SectionWrapper>

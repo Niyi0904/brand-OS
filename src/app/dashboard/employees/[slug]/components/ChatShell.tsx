@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { History } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { History, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useChat } from "../hooks/use-chat";
 import { HistoryPanel } from "./HistoryPanel";
@@ -62,6 +62,10 @@ export function ChatShell({
 }: ChatShellProps) {
   const [historyCollapsed, setHistoryCollapsed] = useState(true);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
 
   const { messages, isStreaming, error, sendMessage, stopStreaming, retryLast } =
     useChat({
@@ -115,6 +119,30 @@ export function ChatShell({
     voiceAdjectives: brand.brandBrain?.voiceAdjectives,
     primaryAudience: brand.brandBrain?.primaryAudience,
     primaryKeywords: brand.brandBrain?.primaryKeywords,
+  };
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (messagesEndRef.current && !userScrolledUp) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [displayMessages, userScrolledUp]);
+
+  // Track scroll position
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setUserScrolledUp(!isAtBottom);
+    setShowJumpToLatest(!isAtBottom && isStreaming);
+  }, [isStreaming]);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      setUserScrolledUp(false);
+      setShowJumpToLatest(false);
+    }
   };
 
   return (
@@ -171,9 +199,9 @@ export function ChatShell({
       )}
 
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col min-h-0">
         {/* Chat header */}
-        <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -224,7 +252,7 @@ export function ChatShell({
         </header>
 
         {/* Context indicator */}
-        <div className="px-4 pt-2 sm:px-6">
+        <div className="shrink-0 px-4 pt-2 sm:px-6">
           <ContextIndicator
             brandName={brand.name}
             brandSlug={brand.slug}
@@ -235,7 +263,7 @@ export function ChatShell({
 
         {/* Error state */}
         {error && (
-          <div className="mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
+          <div className="shrink-0 mx-6 mt-4 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-[var(--color-red)]">{error}</span>
               <Button
@@ -250,45 +278,65 @@ export function ChatShell({
           </div>
         )}
 
-        {/* Message thread or suggested prompts */}
-        {displayMessages.length === 0 ? (
-          <SuggestedPrompts
-            employeeSlug={employee.slug}
-            employeeName={employee.name}
-            employeeIcon={employee.icon}
-            employeeAccent={employee.accentColor}
+        {/* Scrollable content area */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="relative flex-1 flex flex-col overflow-y-auto min-h-0"
+        >
+          {displayMessages.length === 0 ? (
+            <SuggestedPrompts
+              employeeSlug={employee.slug}
+              employeeName={employee.name}
+              employeeIcon={employee.icon}
+              employeeAccent={employee.accentColor}
+              brandName={brand.name}
+              onSelect={handleSend}
+            />
+          ) : (
+            <MessageThread
+              messages={displayMessages}
+              employeeName={employee.name}
+              employeeIcon={employee.icon}
+              employeeAccent={employee.accentColor}
+              isStreaming={isStreaming}
+              onRegenerate={handleRegenerate}
+              onCopy={handleCopy}
+              onSave={handleSave}
+              onFeedback={handleFeedback}
+            />
+          )}
+          <SparseBrainWarning
             brandName={brand.name}
-            onSelect={handleSend}
+            brandSlug={brand.slug}
+            isSparse={isBrainSparse}
           />
-        ) : (
-          <MessageThread
-            messages={displayMessages}
-            employeeName={employee.name}
-            employeeIcon={employee.icon}
-            employeeAccent={employee.accentColor}
+          {/* Bottom spacer so last message is never hidden behind the docked input */}
+          <div ref={messagesEndRef} className="h-6 shrink-0" />
+
+          {/* Jump to latest pill */}
+          {showJumpToLatest && (
+            <button
+              onClick={scrollToBottom}
+              className="absolute bottom-4 left-1/2 z-[var(--z-overlay)] flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-1)] px-4 py-2 text-xs text-[var(--color-text-secondary)] shadow-lg transition-all hover:bg-[var(--color-surface-2)]"
+              style={{ animation: "fadeInUp 200ms ease-out" }}
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+              Jump to latest
+            </button>
+          )}
+        </div>
+
+        {/* Docked input area */}
+        <div className="shrink-0">
+          <ChatInput
+            placeholder={`Ask ${employee.name} anything about ${brand.name}...`}
+            onSend={handleSend}
+            onStop={handleStop}
+            disabled={false}
             isStreaming={isStreaming}
-            onRegenerate={handleRegenerate}
-            onCopy={handleCopy}
-            onSave={handleSave}
-            onFeedback={handleFeedback}
           />
-        )}
-
-        {/* Sparse brain warning */}
-        <SparseBrainWarning
-          brandName={brand.name}
-          brandSlug={brand.slug}
-          isSparse={isBrainSparse}
-        />
-
-        {/* Input area */}
-        <ChatInput
-          placeholder={`Ask ${employee.name} anything about ${brand.name}...`}
-          onSend={handleSend}
-          onStop={handleStop}
-          disabled={false}
-          isStreaming={isStreaming}
-        />
+        </div>
       </main>
     </div>
   );

@@ -1,26 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { RepeatingRow } from "@/components/ui/repeating-row";
 import type { RowData } from "@/components/ui/repeating-row";
+import { FieldError } from "@/components/ui/field-error";
 
 interface CompetitorsSectionProps {
-  slug: string;
   competitorList: string;
   competitiveAdvantages: string;
   thingsNeverDo: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
+
+type RawCompetitor = { name?: string; positioningNote?: string } | string;
 
 function parseCompetitors(raw: string): RowData[] {
   try {
-    const arr = JSON.parse(raw || "[]");
-    return arr.map((c: any, i: number) => ({
+    const arr = JSON.parse(raw || "[]") as RawCompetitor[];
+    return arr.map((c, i) => ({
       id: `competitor-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      name: typeof c === "string" ? c : c.name || "",
-      positioningNote: typeof c === "string" ? "" : c.positioningNote || "",
+      name: typeof c === "string" ? c : (c.name ?? ""),
+      positioningNote: typeof c === "string" ? "" : (c.positioningNote ?? ""),
     }));
   } catch {
     return [];
@@ -28,13 +31,12 @@ function parseCompetitors(raw: string): RowData[] {
 }
 
 export function CompetitorsSection({
-  slug,
   competitorList,
   competitiveAdvantages,
   thingsNeverDo,
+  onFieldChange,
+  errors,
 }: CompetitorsSectionProps) {
-  const { save } = useSectionAutoSave("competitors", slug);
-
   // Local state so "Add another" works immediately
   // ALWAYS show at least one empty row so input fields are visible
   const [localCompetitors, setLocalCompetitors] = useState<RowData[]>(() => {
@@ -47,10 +49,7 @@ export function CompetitorsSection({
 
   const handleCompetitorsChange = (rows: RowData[]) => {
     setLocalCompetitors(rows);
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("competitorList", JSON.stringify(rows.map((r) => ({ name: r.name, positioningNote: r.positioningNote }))));
-    save(fd);
+    onFieldChange("competitorList", JSON.stringify(rows.map((r) => ({ name: r.name, positioningNote: r.positioningNote }))));
   };
 
   return (
@@ -78,6 +77,12 @@ export function CompetitorsSection({
             ]}
             itemLabel="competitor"
           />
+          <input
+            type="hidden"
+            name="competitorList"
+            value={JSON.stringify(localCompetitors.map((r) => ({ name: r.name, positioningNote: r.positioningNote })))}
+          />
+          <FieldError messages={errors?.competitorList} />
         </div>
 
         <div className="space-y-2">
@@ -89,13 +94,9 @@ export function CompetitorsSection({
             name="competitiveAdvantages"
             defaultValue={competitiveAdvantages}
             placeholder="What this brand does better than anyone else."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("competitiveAdvantages", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("competitiveAdvantages", e.target.value)}
           />
+          <FieldError messages={errors?.competitiveAdvantages} />
         </div>
 
         <div className="space-y-2">
@@ -107,13 +108,9 @@ export function CompetitorsSection({
             name="thingsNeverDo"
             defaultValue={thingsNeverDo}
             placeholder="Lines this brand will not cross. Practices to avoid."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("thingsNeverDo", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("thingsNeverDo", e.target.value)}
           />
+          <FieldError messages={errors?.thingsNeverDo} />
         </div>
       </div>
     </SectionWrapper>

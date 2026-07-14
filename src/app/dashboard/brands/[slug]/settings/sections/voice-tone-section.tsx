@@ -1,34 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { TagInput } from "@/components/ui/tag-input";
+import { FieldError } from "@/components/ui/field-error";
 
 interface VoiceToneSectionProps {
-  slug: string;
   voiceAdjectives: string;
   toneDescription: string;
   writingStyleNotes: string;
   thingsToAvoid: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function VoiceToneSection({
-  slug,
   voiceAdjectives,
   toneDescription,
   writingStyleNotes,
   thingsToAvoid,
+  onFieldChange,
+  errors,
 }: VoiceToneSectionProps) {
-  const { save } = useSectionAutoSave("voice-tone", slug);
-
-  // Local state for tags so UI updates immediately (not waiting for API)
+  // Local state for tags so UI updates immediately (not waiting for save)
   const [localAdjectives, setLocalAdjectives] = useState<string[]>(() => {
     try { return JSON.parse(voiceAdjectives || "[]"); } catch { return []; }
   });
 
-  // Sync from props when API save completes
+  // Sync from props when server data changes (after save + revalidation)
   useEffect(() => {
     try {
       const parsed = JSON.parse(voiceAdjectives || "[]");
@@ -37,11 +37,8 @@ export function VoiceToneSection({
   }, [voiceAdjectives]);
 
   const handleAdjectiveChange = (tags: string[]) => {
-    setLocalAdjectives(tags); // update UI immediately
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("voiceAdjectives", JSON.stringify(tags));
-    save(fd); // fire save in background
+    setLocalAdjectives(tags);
+    onFieldChange("voiceAdjectives", JSON.stringify(tags));
   };
 
   return (
@@ -67,6 +64,8 @@ export function VoiceToneSection({
             maxTags={6}
             placeholder="e.g. Warm, direct, a little irreverent — never corporate"
           />
+          <input type="hidden" name="voiceAdjectives" value={JSON.stringify(localAdjectives)} />
+          <FieldError messages={errors?.voiceAdjectives} />
         </div>
 
         <div className="space-y-2">
@@ -78,13 +77,9 @@ export function VoiceToneSection({
             name="toneDescription"
             defaultValue={toneDescription}
             placeholder="How the brand sounds in different contexts."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("toneDescription", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("toneDescription", e.target.value)}
           />
+          <FieldError messages={errors?.toneDescription} />
         </div>
 
         <div className="space-y-2">
@@ -96,13 +91,9 @@ export function VoiceToneSection({
             name="writingStyleNotes"
             defaultValue={writingStyleNotes}
             placeholder="Sentence structure, paragraph length, formatting preferences."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("writingStyleNotes", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("writingStyleNotes", e.target.value)}
           />
+          <FieldError messages={errors?.writingStyleNotes} />
         </div>
 
         <div className="space-y-2">
@@ -114,13 +105,9 @@ export function VoiceToneSection({
             name="thingsToAvoid"
             defaultValue={thingsToAvoid}
             placeholder="e.g. Don't use jargon. Don't be preachy. Don't mention competitors by name."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("thingsToAvoid", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("thingsToAvoid", e.target.value)}
           />
+          <FieldError messages={errors?.thingsToAvoid} />
         </div>
       </div>
     </SectionWrapper>

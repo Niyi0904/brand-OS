@@ -35,7 +35,7 @@ export default async function BrandSettingsPage({ params }: SettingsPageProps) {
     tagline: brain.tagline || "",
     websiteUrl: brain.websiteUrl || "",
     industry: brain.industry || "",
-    foundedYear: brain.foundedYear ? String(brain.foundedYear) : "",
+    foundedYear: brain.foundedYear != null ? String(brain.foundedYear) : "",
     // Section 2: Mission & values
     missionStatement: brain.missionStatement || "",
     coreValues: brain.coreValues || "",

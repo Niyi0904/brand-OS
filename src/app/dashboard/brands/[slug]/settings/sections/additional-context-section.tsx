@@ -1,24 +1,24 @@
 "use client";
 
-import { useSectionAutoSave } from "../use-section-auto-save";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
+import { FieldError } from "@/components/ui/field-error";
 
 interface AdditionalContextSectionProps {
-  slug: string;
   freeformNotes: string;
   contentExamples: string;
   brandStory: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function AdditionalContextSection({
-  slug,
   freeformNotes,
   contentExamples,
   brandStory,
+  onFieldChange,
+  errors,
 }: AdditionalContextSectionProps) {
-  const { save } = useSectionAutoSave("additional-context", slug);
-
   return (
     <SectionWrapper
       title="Additional context"
@@ -41,13 +41,9 @@ export function AdditionalContextSection({
             name="freeformNotes"
             defaultValue={freeformNotes}
             placeholder="Anything that doesn't fit elsewhere. Random facts, history, context."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("freeformNotes", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("freeformNotes", e.target.value)}
           />
+          <FieldError messages={errors?.freeformNotes} />
         </div>
 
         <div className="space-y-2">
@@ -59,13 +55,9 @@ export function AdditionalContextSection({
             name="contentExamples"
             defaultValue={contentExamples}
             placeholder="Paste links to great content, or describe what good looks like."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("contentExamples", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("contentExamples", e.target.value)}
           />
+          <FieldError messages={errors?.contentExamples} />
         </div>
 
         <div className="space-y-2">
@@ -77,13 +69,9 @@ export function AdditionalContextSection({
             name="brandStory"
             defaultValue={brandStory}
             placeholder="The origin story. Why this brand exists. The people behind it."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("brandStory", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("brandStory", e.target.value)}
           />
+          <FieldError messages={errors?.brandStory} />
         </div>
       </div>
     </SectionWrapper>

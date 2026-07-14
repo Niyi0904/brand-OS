@@ -1,29 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSectionAutoSave } from "../use-section-auto-save";
+import { useState } from "react";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { TagInput } from "@/components/ui/tag-input";
+import { FieldError } from "@/components/ui/field-error";
 
 interface SeoKeywordsSectionProps {
-  slug: string;
   primaryKeywords: string;
   secondaryKeywords: string;
   topicsToOwn: string;
   topicsToAvoid: string;
+  onFieldChange: (field: string, value: string) => void;
+  errors?: Partial<Record<string, string[]>>;
 }
 
 export function SeoKeywordsSection({
-  slug,
   primaryKeywords,
   secondaryKeywords,
   topicsToOwn,
   topicsToAvoid,
+  onFieldChange,
+  errors,
 }: SeoKeywordsSectionProps) {
-  const { save } = useSectionAutoSave("seo-keywords", slug);
-
-  // Local state for tags so UI updates immediately (not waiting for API)
+  // Local state for tags so UI updates immediately (not waiting for save)
   const [localPrimary, setLocalPrimary] = useState<string[]>(() => {
     try { return JSON.parse(primaryKeywords || "[]"); } catch { return []; }
   });
@@ -31,29 +31,14 @@ export function SeoKeywordsSection({
     try { return JSON.parse(secondaryKeywords || "[]"); } catch { return []; }
   });
 
-  // Sync from props when API save completes
-  useEffect(() => {
-    try { setLocalPrimary(JSON.parse(primaryKeywords || "[]")); } catch { /* ignore */ }
-  }, [primaryKeywords]);
-
-  useEffect(() => {
-    try { setLocalSecondary(JSON.parse(secondaryKeywords || "[]")); } catch { /* ignore */ }
-  }, [secondaryKeywords]);
-
   const handlePrimaryChange = (tags: string[]) => {
     setLocalPrimary(tags);
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("primaryKeywords", JSON.stringify(tags));
-    save(fd);
+    onFieldChange("primaryKeywords", JSON.stringify(tags));
   };
 
   const handleSecondaryChange = (tags: string[]) => {
     setLocalSecondary(tags);
-    const fd = new FormData();
-    fd.set("slug", slug);
-    fd.set("secondaryKeywords", JSON.stringify(tags));
-    save(fd);
+    onFieldChange("secondaryKeywords", JSON.stringify(tags));
   };
 
   return (
@@ -79,6 +64,8 @@ export function SeoKeywordsSection({
             maxTags={10}
             placeholder="e.g. project management, team collaboration, remote work"
           />
+          <input type="hidden" name="primaryKeywords" value={JSON.stringify(localPrimary)} />
+          <FieldError messages={errors?.primaryKeywords} />
         </div>
 
         <div className="space-y-2">
@@ -91,6 +78,8 @@ export function SeoKeywordsSection({
             maxTags={20}
             placeholder="Long-tail keywords, related terms, synonyms"
           />
+          <input type="hidden" name="secondaryKeywords" value={JSON.stringify(localSecondary)} />
+          <FieldError messages={errors?.secondaryKeywords} />
         </div>
 
         <div className="space-y-2">
@@ -102,13 +91,9 @@ export function SeoKeywordsSection({
             name="topicsToOwn"
             defaultValue={topicsToOwn}
             placeholder="Subject areas where this brand wants to be seen as an authority."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("topicsToOwn", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("topicsToOwn", e.target.value)}
           />
+          <FieldError messages={errors?.topicsToOwn} />
         </div>
 
         <div className="space-y-2">
@@ -120,13 +105,9 @@ export function SeoKeywordsSection({
             name="topicsToAvoid"
             defaultValue={topicsToAvoid}
             placeholder="Subjects the brand does not want to be associated with."
-            onBlur={(e) => {
-              const fd = new FormData();
-              fd.set("slug", slug);
-              fd.set("topicsToAvoid", e.target.value);
-              save(fd);
-            }}
+            onBlur={(e) => onFieldChange("topicsToAvoid", e.target.value)}
           />
+          <FieldError messages={errors?.topicsToAvoid} />
         </div>
       </div>
     </SectionWrapper>

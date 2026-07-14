@@ -117,9 +117,9 @@ export function OnboardingChat({
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] w-full overflow-hidden bg-[var(--color-bg)]">
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col min-h-0">
         {/* Chat header */}
-        <header className="flex h-14 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6">
           <EmployeeAvatar
             name={employee.name}
             icon={employee.icon}
@@ -138,7 +138,7 @@ export function OnboardingChat({
         </header>
 
         {/* Onboarding header */}
-        <div className="flex items-center gap-2 px-4 pt-3 sm:px-6">
+        <div className="shrink-0 flex items-center gap-2 px-4 pt-3 sm:px-6">
           <div
             className={`h-2 w-2 rounded-full shrink-0 ${
               isSparse ? "bg-[var(--color-amber)]" : "bg-[var(--color-green)]"
@@ -151,87 +151,73 @@ export function OnboardingChat({
           </p>
         </div>
 
-        {/* Sparse brain banner */}
-        {isSparse && !sparseDismissed && (
-          <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-[var(--color-warning)]/20 bg-[var(--color-warning)]/10 px-3 py-2 sm:mx-6 animate-banner-enter">
-            <p className="flex-1 text-xs text-[var(--color-text-secondary)]">
-              Your Brand Brain is light right now — the AI will do its best with
-              what it has. You can add more context any time.
-            </p>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href={`/dashboard/brands/${brandSlug}/settings`}
-                className="text-xs text-[var(--brand-accent)] hover:underline whitespace-nowrap"
-              >
-                Add to Brand Brain
-              </Link>
-              <button
-                type="button"
-                onClick={() => setSparseDismissed(true)}
-                className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
-                aria-label="Dismiss"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && (
-          <div className="mx-4 mt-3 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4 sm:mx-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0 text-[var(--color-red)]" />
-              <span className="text-sm text-[var(--color-red)]">
-                {consecutiveErrors >= 3
-                  ? "We're having trouble connecting. Your brand is saved — come back in a few minutes and we'll be ready."
-                  : "Something went wrong on our end. Try again."}
-              </span>
-            </div>
-            <div className="mt-2 flex gap-2">
-              {consecutiveErrors < 3 ? (
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Sparse brain banner */}
+          {isSparse && !sparseDismissed && (
+            <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-[var(--color-warning)]/20 bg-[var(--color-warning)]/10 px-3 py-2 sm:mx-6 animate-banner-enter">
+              <p className="flex-1 text-xs text-[var(--color-text-secondary)]">
+                Your Brand Brain is light right now — the AI will do its best with
+                what it has. You can add more context any time.
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href={`/dashboard/brands/${brandSlug}/settings`}
+                  className="text-xs text-[var(--brand-accent)] hover:underline whitespace-nowrap"
+                >
+                  Add to Brand Brain
+                </Link>
                 <button
                   type="button"
-                  onClick={handleRetry}
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium"
-                  style={{
-                    background: "var(--brand-accent)",
-                    color: "var(--color-bg)",
-                  }}
+                  onClick={() => setSparseDismissed(true)}
+                  className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
+                  aria-label="Dismiss"
                 >
-                  Try again
+                  <X className="h-3.5 w-3.5" />
                 </button>
-              ) : (
-                <Link
-                  href="/dashboard"
-                  className="text-sm text-[var(--brand-accent)] hover:underline"
-                >
-                  Go to your dashboard
-                </Link>
-              )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Message thread */}
-        <div className="flex-1 overflow-y-auto">
-          {messages.length > 0 && (
-            <MessageThread
-              messages={messages as any}
-              employeeName={employee.name}
-              employeeIcon={employee.icon}
-              employeeAccent={employee.accentColor}
-              isStreaming={isStreaming}
-              onRegenerate={handleRetry}
-              onCopy={() => {}}
-              onSave={() => {}}
-              onFeedback={() => {}}
-            />
+          {/* Error state */}
+          {error && (
+            <div className="mx-4 mt-3 rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 p-4 sm:mx-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-[var(--color-red)]" />
+                <span className="text-sm text-[var(--color-red)]">
+                  {consecutiveErrors >= 3
+                    ? "We're having trouble connecting. Your brand is saved — come back in a few minutes and we'll be ready."
+                    : "Something went wrong on our end. Try again."}
+                </span>
+              </div>
+              <div className="mt-2 flex gap-2">
+                {consecutiveErrors < 3 ? (
+                  <button
+                    type="button"
+                    onClick={handleRetry}
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium"
+                    style={{
+                      background: "var(--brand-accent)",
+                      color: "var(--color-bg)",
+                    }}
+                  >
+                    Try again
+                  </button>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    className="text-sm text-[var(--brand-accent)] hover:underline"
+                  >
+                    Go to your dashboard
+                  </Link>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Activation completion message */}
           {activationShown && (
-            <div className="px-4 pb-4 sm:px-6 animate-activation-enter">
+            <div className="px-4 pb-4 pt-4 sm:px-6 animate-activation-enter">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-[var(--color-green)] shrink-0" />
                 <p className="text-[0.8125rem] text-[var(--color-text-secondary)]">
@@ -266,27 +252,47 @@ export function OnboardingChat({
               </div>
             </div>
           )}
+
+          {/* Message thread */}
+          {messages.length > 0 && (
+            <MessageThread
+              messages={messages as any}
+              employeeName={employee.name}
+              employeeIcon={employee.icon}
+              employeeAccent={employee.accentColor}
+              isStreaming={isStreaming}
+              onRegenerate={handleRetry}
+              onCopy={() => {}}
+              onSave={() => {}}
+              onFeedback={() => {}}
+            />
+          )}
+
+          {/* Bottom spacer for input clearance */}
+          <div className="h-24 shrink-0" />
         </div>
 
         {/* Send instruction */}
         {!messageSent && !isStreaming && (
-          <div className="px-4 pb-1 sm:px-6">
+          <div className="shrink-0 px-4 py-2 sm:px-6">
             <p className="text-xs text-[var(--color-text-tertiary)]">
               Press Enter to send — or edit the prompt first.
             </p>
           </div>
         )}
 
-        {/* Input area */}
-        <ChatInput
-          placeholder={`Ask ${employee.name} anything about ${brand.name}...`}
-          onSend={handleSend}
-          onStop={stopStreaming}
-          disabled={completing}
-          isStreaming={isStreaming}
-          value={prompt}
-          onValueChange={setPrompt}
-        />
+        {/* Docked input area */}
+        <div className="shrink-0">
+          <ChatInput
+            placeholder={`Ask ${employee.name} anything about ${brand.name}...`}
+            onSend={handleSend}
+            onStop={stopStreaming}
+            disabled={completing}
+            isStreaming={isStreaming}
+            value={prompt}
+            onValueChange={setPrompt}
+          />
+        </div>
       </main>
     </div>
   );

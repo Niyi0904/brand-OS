@@ -67,15 +67,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="relative border-t border-[var(--color-border)] bg-[var(--color-bg)]">
-      {/* Top fade gradient */}
-      <div
-        className="pointer-events-none absolute -top-8 left-0 right-0 h-8"
-        style={{
-          background: "linear-gradient(transparent, var(--color-bg))",
-        }}
-      />
-
+    <div className="relative z-[var(--z-sticky)] border-t border-[var(--color-border)] bg-[var(--color-bg)]">
       <div className="p-4 pt-3">
         <div className="relative flex items-end gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-1)] p-3 transition-colors focus-within:border-[var(--brand-accent)]">
           <textarea

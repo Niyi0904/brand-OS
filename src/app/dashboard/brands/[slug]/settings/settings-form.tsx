@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useActionState, useTransition } from "react";
-import { Save, Upload, Check, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Upload, Check, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SaveBar } from "@/components/ui/save-bar";
 import { UploadDropzone } from "@/lib/uploadthing-components";
 import { updateBrandBrainAction, type SettingsActionState } from "./actions";
+import { useBrandBrainForm } from "./use-brand-brain-form";
+import { useBeforeUnload } from "./use-before-unload";
 import { BrandIdentitySection } from "./sections/brand-identity-section";
 import { MissionValuesSection } from "./sections/mission-values-section";
 import { VoiceToneSection } from "./sections/voice-tone-section";
@@ -40,91 +41,69 @@ const COMPLETENESS_FIELDS: string[] = [
   "freeformNotes", "contentExamples", "brandStory",
 ];
 
+const isFilledValue = (value: string | null | undefined): boolean => {
+  if (!value || value.trim().length === 0) return false;
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.length > 0;
+  } catch {}
+  return true;
+};
+
 export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: SettingsFormProps) {
   const initialState: SettingsActionState = {};
   const [state, formAction] = useActionState(updateBrandBrainAction, initialState);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(logoUrl);
   const [hasFileSelected, setHasFileSelected] = useState(false);
 
-  // Track live field values for dynamic progress — init from server data
-  const [liveValues, setLiveValues] = useState<Record<string, string | null>>(() => {
-    return Object.fromEntries(
-      COMPLETENESS_FIELDS.map((field) => [field, brain?.[field] ?? null])
-    );
-  });
+  const { values, isDirty, saveState, fieldErrors, onFieldChange, handleActionResult, markSaving } =
+    useBrandBrainForm({
+      initialValues: Object.fromEntries(
+        COMPLETENESS_FIELDS.map((f) => [f, brain?.[f] ?? ""])
+      ),
+    });
 
-  // Sync when brain prop changes (after server save + refresh)
+  // Wire action state into the hook's result handler
   useEffect(() => {
-    if (brain) {
-      setLiveValues((prev) => {
-        const next = { ...prev };
-        for (const field of COMPLETENESS_FIELDS) {
-          const serverVal = brain[field];
-          if (serverVal !== undefined) {
-            next[field] = serverVal;
-          }
-        }
-        return next;
-      });
+    if (state && (state.message || state.errors)) {
+      handleActionResult(state);
     }
-  }, [brain]);
+  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Listen for field changes via a custom event dispatched by section components
+  // Warn before navigating away with unsaved changes
+  useBeforeUnload(isDirty);
+
+  // Scroll to first field error on validation failure
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const { fieldId, value } = e.detail;
-      setLiveValues((prev) => ({ ...prev, [fieldId]: value }));
-    };
-    window.addEventListener("brain-field-change", handler as EventListener);
-    return () => window.removeEventListener("brain-field-change", handler as EventListener);
-  }, []);
+    if (Object.keys(fieldErrors).length > 0) {
+      const firstError = document.querySelector("[data-field-error]");
+      firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [fieldErrors]);
 
-  // Calculate progress from live values (responds to both saved and unsaved changes)
-  const isFilledValue = (value: string | null | undefined): boolean => {
-    if (!value || value.trim().length === 0) return false;
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.length > 0;
-    } catch {}
-    return true;
-  };
+  // Progress from values map (responds to both saved and unsaved changes)
   const progress = (() => {
     const totalFields = COMPLETENESS_FIELDS.length;
-    const filledFields = COMPLETENESS_FIELDS.filter((field) => isFilledValue(liveValues[field])).length;
+    const filledFields = COMPLETENESS_FIELDS.filter((field) => isFilledValue(values[field])).length;
     return Math.round((filledFields / totalFields) * 100);
   })();
-
-  // Revalidate after successful save
-  useEffect(() => {
-    if (state?.message && !state.errors) {
-      router.refresh();
-    }
-  }, [state, router]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    markSaving();
     startTransition(() => {
       formAction(fd);
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <form onSubmit={handleSubmit}>
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="logo" value={selectedLogo ?? ""} id="logo-input" />
-
-        {/* Success/Error Messages */}
-        {state?.message && !state.errors && (
-          <div className="mb-6 rounded-md bg-green-500/10 px-4 py-3 text-sm text-green-400 flex items-center gap-2">
-            <Check className="h-4 w-4" />
-            {state.message}
-          </div>
-        )}
 
         {/* Live Progress Bar — responds to both saved data AND unsaved input changes */}
         <Card className="mb-6">
@@ -222,93 +201,89 @@ export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: 
         {/* Section components — INSIDE the form so their inputs get collected on Save changes */}
         <div className="space-y-6 mb-6">
           <BrandIdentitySection
-            slug={slug}
             brandName={brandName}
             tagline={brain?.tagline ?? ""}
             websiteUrl={brain?.websiteUrl ?? ""}
             industry={brain?.industry ?? ""}
             foundedYear={brain?.foundedYear ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <MissionValuesSection
-            slug={slug}
             missionStatement={brain?.missionStatement ?? ""}
             coreValues={brain?.coreValues ?? ""}
             brandPromise={brain?.brandPromise ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <VoiceToneSection
-            slug={slug}
             voiceAdjectives={brain?.voiceAdjectives ?? ""}
             toneDescription={brain?.toneDescription ?? ""}
             writingStyleNotes={brain?.writingStyleNotes ?? ""}
             thingsToAvoid={brain?.thingsToAvoid ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <TargetAudienceSection
-            slug={slug}
             primaryAudience={brain?.primaryAudience ?? ""}
             audienceDemographics={brain?.audienceDemographics ?? ""}
             audiencePainPoints={brain?.audiencePainPoints ?? ""}
             audienceVocabulary={brain?.audienceVocabulary ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <ProductsServicesSection
-            slug={slug}
             productList={brain?.productList ?? ""}
             pricingTier={brain?.pricingTier ?? ""}
             keyDifferentiators={brain?.keyDifferentiators ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <CompetitorsSection
-            slug={slug}
             competitorList={brain?.competitorList ?? ""}
             competitiveAdvantages={brain?.competitiveAdvantages ?? ""}
             thingsNeverDo={brain?.thingsNeverDo ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <SeoKeywordsSection
-            slug={slug}
             primaryKeywords={brain?.primaryKeywords ?? ""}
             secondaryKeywords={brain?.secondaryKeywords ?? ""}
             topicsToOwn={brain?.topicsToOwn ?? ""}
             topicsToAvoid={brain?.topicsToAvoid ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <FaqsSection
-            slug={slug}
             faqList={brain?.faqList ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
           <AdditionalContextSection
-            slug={slug}
             freeformNotes={brain?.freeformNotes ?? ""}
             contentExamples={brain?.contentExamples ?? ""}
             brandStory={brain?.brandStory ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
           />
 
-          <AppearanceSection slug={slug} accentColour={accentColour ?? ""} />
+          <AppearanceSection
+            accentColour={accentColour ?? ""}
+            onFieldChange={onFieldChange}
+            errors={fieldErrors}
+          />
         </div>
 
-        {/* Save Button */}
-        <div className="flex items-center gap-4 pb-4">
-          <Button type="submit" size="lg" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save changes
-              </>
-            )}
-          </Button>
-          {state?.message && !state.errors && (
-            <span className="text-sm text-green-400">✓ Saved</span>
-          )}
-        </div>
+        {/* Save Bar — sticky bottom, visible when dirty or saving */}
+        <SaveBar isDirty={isDirty} saveState={saveState} isPending={isPending} />
       </form>
     </div>
   );
