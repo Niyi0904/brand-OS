@@ -10,19 +10,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   useBrandSwitchEffects();
 
-  const accent = currentBrand?.accentColour || "#7c9cff";
-  const accentStrong = currentBrand?.accentColour
-    ? `${currentBrand.accentColour}cc`
-    : "#a6bdff";
-
   return (
-    <div
-      className="mos-app-shell min-h-screen"
-      style={{
-        "--brand-accent": accent,
-        "--brand-accent-strong": accentStrong,
-      } as React.CSSProperties}
-    >
+    <div className="mos-app-shell min-h-screen">
       {children}
       <BrandSwitchOverlay />
     </div>

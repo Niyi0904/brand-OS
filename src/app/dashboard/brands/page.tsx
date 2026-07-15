@@ -123,7 +123,7 @@ function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) 
                   Edit Brand Brain
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-[var(--color-danger)]">
+              <DropdownMenuItem className="text-[var(--danger)]">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete brand
               </DropdownMenuItem>
@@ -139,13 +139,13 @@ function BrandCard({ id, name, slug, description, healthScore }: BrandCardData) 
             <span className="mos-muted">Health score</span>
             <span className="font-semibold">{healthScore}%</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-3)]">
-            <div className="h-full rounded-full bg-[var(--brand-accent)]" style={{ width: `${healthScore}%` }} />
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-3)]">
+            <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${healthScore}%` }} />
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <span className="mos-success-pill inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
+          <span className="mos-badge mos-badge-accent inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Active
           </span>

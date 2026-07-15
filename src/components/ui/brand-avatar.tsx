@@ -26,8 +26,8 @@ export function BrandAvatar({ brand, size = 32 }: BrandAvatarProps) {
 
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full ${container} ${text} font-medium text-white shrink-0`}
-      style={{ background: brand.accentColour || "var(--brand-accent, #7c6ff7)" }}
+      className={`inline-flex items-center justify-center rounded-full ${container} ${text} font-medium text-[var(--text-inverse)] shrink-0`}
+      style={{ background: "var(--accent)" }}
       aria-hidden="true"
     >
       {getInitials(brand.name)}

@@ -18,7 +18,6 @@ import { CompetitorsSection } from "./sections/competitors-section";
 import { SeoKeywordsSection } from "./sections/seo-keywords-section";
 import { FaqsSection } from "./sections/faqs-section";
 import { AdditionalContextSection } from "./sections/additional-context-section";
-import { AppearanceSection } from "./sections/appearance-section";
 
 type SettingsFormProps = {
   slug: string;
@@ -271,12 +270,6 @@ export function SettingsForm({ slug, brandName, logoUrl, accentColour, brain }: 
             freeformNotes={brain?.freeformNotes ?? ""}
             contentExamples={brain?.contentExamples ?? ""}
             brandStory={brain?.brandStory ?? ""}
-            onFieldChange={onFieldChange}
-            errors={fieldErrors}
-          />
-
-          <AppearanceSection
-            accentColour={accentColour ?? ""}
             onFieldChange={onFieldChange}
             errors={fieldErrors}
           />

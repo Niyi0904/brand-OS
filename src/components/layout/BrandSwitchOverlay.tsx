@@ -51,8 +51,8 @@ export function BrandSwitchOverlay() {
             : "scale-95 translate-y-4 opacity-0"
         }`}
         style={{
-          background: "var(--color-surface-1, #1a1a2e)",
-          border: "1px solid var(--color-border, #2a2a4a)",
+          background: "var(--surface-1)",
+          border: "1px solid var(--border)",
           minWidth: "280px",
         }}
       >
@@ -60,25 +60,23 @@ export function BrandSwitchOverlay() {
         <div
           className="flex h-16 w-16 items-center justify-center rounded-full"
           style={{
-            background: currentBrand?.accentColour
-              ? `${currentBrand.accentColour}22`
-              : "var(--color-surface-3)",
+            background: "var(--surface-3)",
           }}
         >
           <Sparkles
             className="h-7 w-7"
             style={{
-              color: currentBrand?.accentColour ?? "var(--brand-accent)",
+              color: "var(--accent)",
             }}
           />
         </div>
 
         {/* Text */}
         <div className="text-center">
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+          <p className="text-sm font-medium text-[var(--text-secondary)]">
             Switching workspace
           </p>
-          <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
+          <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">
             {currentBrand?.name ?? "..."}
           </p>
         </div>
@@ -88,21 +86,21 @@ export function BrandSwitchOverlay() {
           <span
             className="h-2 w-2 animate-bounce rounded-full"
             style={{
-              backgroundColor: currentBrand?.accentColour ?? "var(--brand-accent)",
+              backgroundColor: "var(--accent)",
               animationDelay: "0ms",
             }}
           />
           <span
             className="h-2 w-2 animate-bounce rounded-full"
             style={{
-              backgroundColor: currentBrand?.accentColour ?? "var(--brand-accent)",
+              backgroundColor: "var(--accent)",
               animationDelay: "150ms",
             }}
           />
           <span
             className="h-2 w-2 animate-bounce rounded-full"
             style={{
-              backgroundColor: currentBrand?.accentColour ?? "var(--brand-accent)",
+              backgroundColor: "var(--accent)",
               animationDelay: "300ms",
             }}
           />

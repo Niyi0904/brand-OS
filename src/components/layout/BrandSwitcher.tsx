@@ -288,13 +288,13 @@ export function BrandSwitcher({
         onClick={() => handleSwitch(brand.id)}
         onMouseEnter={() => setFocusedIndex(globalIdx)}
         className={`flex w-full items-center gap-[10px] px-3 py-0 text-left text-sm transition-colors ${
-          isFocused ? "bg-[var(--color-surface-2)]" : "hover:bg-[var(--color-surface-2)]"
-        } ${isActive ? "bg-[var(--color-surface-2)]" : ""} ${
+          isFocused ? "bg-[var(--surface-3)]" : "hover:bg-[var(--surface-3)]"
+        } ${isActive ? "bg-[var(--surface-3)]" : ""} ${
           isSwitching ? "pointer-events-none opacity-50" : ""
         }`}
         style={{
           minHeight: "44px",
-          borderLeft: isActive ? "2px solid var(--brand-accent)" : "2px solid transparent",
+          borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
           outline: isFocused ? "2px solid var(--accent)" : "none",
           outlineOffset: "-2px",
         }}
@@ -304,14 +304,14 @@ export function BrandSwitcher({
         <div className="flex-1 min-w-0">
           <span
             className={`block truncate text-[0.9375rem] font-medium ${
-              isActive ? "text-[var(--brand-accent)]" : "text-[var(--color-text-primary)]"
+              isActive ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
             }`}
             style={{ maxWidth: "140px" }}
           >
             {highlightMatch(brand.name, searchQuery)}
           </span>
           {brand.organization?.name && (
-            <span className="block truncate text-[0.8125rem] text-[var(--color-text-tertiary)]">
+            <span className="block truncate text-[0.8125rem] text-[var(--text-tertiary)]">
               {brand.organization.name}
             </span>
           )}
@@ -319,14 +319,14 @@ export function BrandSwitcher({
 
         <div className="shrink-0 text-right">
           {isSwitchingThis ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-text-tertiary)]" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--text-tertiary)]" />
           ) : isActive ? (
             <Check
-              className="h-3.5 w-3.5 text-[var(--brand-accent)]"
+              className="h-3.5 w-3.5 text-[var(--accent)]"
               aria-label={`${brand.name} — active`}
             />
           ) : (
-            <span className="text-[0.8125rem] text-[var(--color-text-tertiary)] whitespace-nowrap">
+            <span className="text-[0.8125rem] text-[var(--text-tertiary)] whitespace-nowrap">
               {getRelativeTime(brand.lastActiveAt)}
             </span>
           )}
@@ -344,7 +344,7 @@ export function BrandSwitcher({
         asBottomSheet
           ? "fixed bottom-0 left-0 right-0 z-50 mx-auto w-full rounded-t-xl border border-b-0"
           : "absolute top-full z-50 mt-1 overflow-hidden"
-      } bg-[var(--color-surface-1)] border-[var(--color-border-hover)] shadow-lg animate-dropdown-open`}
+      } bg-[var(--surface-2)] border border-[var(--border-strong)] shadow-lg animate-dropdown-open`}
       style={{
         width: asBottomSheet ? "100%" : align === "right" ? "auto" : "100%",
         minWidth: asBottomSheet ? undefined : "240px",
@@ -352,18 +352,18 @@ export function BrandSwitcher({
         maxHeight: asBottomSheet ? "60vh" : "360px",
         overflowY: "auto",
         borderRadius: asBottomSheet ? "12px 12px 0 0" : "12px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)",
+        boxShadow: "var(--shadow-float)",
         right: align === "right" ? "0" : undefined,
       }}
       onMouseDown={handleUserInteraction}
     >
       {/* Search Input */}
       <div
-        className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-surface-2)]"
+        className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface-3)]"
         style={{ borderRadius: asBottomSheet ? "12px 12px 0 0" : "12px 12px 0 0" }}
       >
         <div className="flex h-10 items-center gap-[10px] px-3">
-          <Search className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-tertiary)]" />
+          <Search className="h-3.5 w-3.5 shrink-0 text-[var(--text-tertiary)]" />
           <input
             ref={searchInputRef}
             type="text"
@@ -373,7 +373,7 @@ export function BrandSwitcher({
               setFocusedIndex(-1);
             }}
             placeholder="Find a brand..."
-            className="flex-1 bg-transparent text-[0.9rem] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+            className="flex-1 bg-transparent text-[0.9rem] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)]"
             aria-label="Search brands"
             aria-controls="brand-listbox"
           />
@@ -384,7 +384,7 @@ export function BrandSwitcher({
       <div id="brand-listbox" className="py-1">
         {filteredRecent.length === 0 && filteredOlder.length === 0 ? (
           <div className="flex items-center justify-center py-8">
-            <span className="text-[0.8125rem] text-[var(--color-text-tertiary)]">
+            <span className="text-[0.8125rem] text-[var(--text-tertiary)]">
               {searchQuery ? "No brands found" : "No brands yet"}
             </span>
           </div>
@@ -394,8 +394,8 @@ export function BrandSwitcher({
             {filteredRecent.length > 0 && !searchQuery && (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5">
-                  <Clock className="h-3 w-3 text-[var(--color-text-tertiary)]" />
-                  <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                  <Clock className="h-3 w-3 text-[var(--text-tertiary)]" />
+                  <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
                     Recent
                   </span>
                 </div>
@@ -403,7 +403,7 @@ export function BrandSwitcher({
                   renderBrandItem(brand, idx, 0),
                 )}
                 {filteredOlder.length > 0 && (
-                  <div className="my-1 border-t border-[var(--color-border)]" />
+                  <div className="my-1 border-t border-[var(--border)]" />
                 )}
               </>
             )}
@@ -413,7 +413,7 @@ export function BrandSwitcher({
               <>
                 {searchQuery ? null : (
                   <div className="flex items-center gap-2 px-3 py-1.5">
-                    <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                    <span className="text-[0.75rem] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
                       All brands
                     </span>
                   </div>
@@ -430,7 +430,7 @@ export function BrandSwitcher({
       {/* Add Brand */}
       {searchQuery === "" && (
         <>
-          <div className="border-t border-[var(--color-border)]" />
+          <div className="border-t border-[var(--border)]" />
           <button
             role="option"
             aria-selected={false}
@@ -444,8 +444,8 @@ export function BrandSwitcher({
             }
             className={`flex w-full items-center gap-[10px] px-3 text-left text-sm transition-colors ${
               focusedIndex === filteredRecent.length + filteredOlder.length
-                ? "bg-[var(--color-surface-2)] text-[var(--color-text-primary)]"
-                : "hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)] text-[var(--color-text-secondary)]"
+                ? "bg-[var(--surface-3)] text-[var(--text-primary)]"
+                : "hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)] text-[var(--text-secondary)]"
             } ${isSwitching ? "pointer-events-none opacity-50" : ""}`}
             style={{ minHeight: "40px" }}
           >
